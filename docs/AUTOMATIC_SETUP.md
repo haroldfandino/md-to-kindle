@@ -48,7 +48,7 @@ If the helper starts before the shared profile exists, it installs assets but pr
 
 The helper uses its bundled local assets; it does not fetch remote updates. After downloading/building an update, rerun `install-helper.ps1`. It stops the old watcher, updates the bundle and restarts it. Settings and passwords are preserved.
 
-Check status from the source checkout using `npm run helper:status`, or:
+From the source checkout, use `npm run profile:test` to explicitly test the protected shared email profile without sending a message or printing its credentials. Check watcher status using `npm run helper:status`, or:
 
 ```powershell
 & "$env:LOCALAPPDATA\md-to-kindle\helper\bin\node.exe" "$env:LOCALAPPDATA\md-to-kindle\helper\helper.cjs" --status

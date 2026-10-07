@@ -19,7 +19,8 @@
     "helper:once": "node helper.cjs --once",
     "helper:watch": "node helper.cjs --watch",
     "helper:status": "node helper.cjs --status",
-    "helper:stop": "node helper.cjs --stop"
+    "helper:stop": "node helper.cjs --stop",
+    "profile:test": "tsx scripts/test-global-profile.ts"
   },
   "dependencies": {
     "jszip": "^3.10.1",
