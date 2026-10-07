@@ -22,4 +22,17 @@ const builtManifest = JSON.parse(await archive.file(`${manifest.id}/manifest.jso
 assert.equal(builtManifest.id, 'md-to-kindle');
 assert.equal(builtManifest.minAppVersion, '1.11.4');
 assert.equal(builtManifest.isDesktopOnly, true);
+const helperArchiveName = `md-to-kindle-helper-${manifest.version}.zip`;
+const helperBytes = await readFile(`dist/${helperArchiveName}`);
+const helperArchive = await JSZip.loadAsync(helperBytes);
+const expectedHelperFiles = [
+  'helper.cjs', 'README.md', 'LICENSE', 'docs/AUTOMATIC_SETUP.md', 'scripts/install-helper.ps1', 'scripts/stop-helper.ps1',
+  ...['main.js', 'manifest.json', 'styles.css', 'LICENSE', 'THIRD_PARTY_NOTICES.md'].map(name => `dist/md-to-kindle/${name}`),
+].map(name => `md-to-kindle-helper/${name}`).sort();
+assert.deepEqual(Object.keys(helperArchive.files).filter(name => !helperArchive.files[name].dir).sort(), expectedHelperFiles);
+for (const name of expectedHelperFiles) {
+  const content = await helperArchive.file(name).async('nodebuffer');
+  if (localEmail) assert.equal(content.includes(Buffer.from(localEmail)), false, `Private recipient leaked into ${name}`);
+}
+assert.ok(checksums.includes(`${createHash('sha256').update(helperBytes).digest('hex')}  ${helperArchiveName}`));
 console.log('Release allowlist, private-recipient exclusion, manifest and archive checksum checks passed.');

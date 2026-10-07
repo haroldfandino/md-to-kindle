@@ -1,6 +1,6 @@
 {
   "name": "md-to-kindle",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Send Obsidian notes and supported documents to Kindle through your own email account.",
   "type": "module",
   "private": true,
@@ -15,7 +15,11 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "release": "npm run build && node scripts/licenses.mjs && node scripts/release.mjs && node scripts/verify-release.mjs",
-    "samples": "tsx scripts/samples.ts"
+    "samples": "tsx scripts/samples.ts",
+    "helper:once": "node helper.cjs --once",
+    "helper:watch": "node helper.cjs --watch",
+    "helper:status": "node helper.cjs --status",
+    "helper:stop": "node helper.cjs --stop"
   },
   "dependencies": {
     "jszip": "^3.10.1",

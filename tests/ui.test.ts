@@ -6,6 +6,8 @@ import { build } from 'esbuild';
 import { JSDOM } from 'jsdom';
 import { DEFAULT_SETTINGS } from '../src/settings';
 import type { TestApp } from './obsidian-stub';
+import { SharedProfileStore } from '../src/shared-profile';
+import { mkdir, mkdtemp } from 'node:fs/promises';
 
 const browser = new JSDOM('');
 Object.assign(globalThis, { document: browser.window.document, DOMParser: browser.window.DOMParser, XMLSerializer: browser.window.XMLSerializer });
@@ -113,6 +115,7 @@ test('validation failures keep the dialog editable; closing a pending send does 
   let finish!: () => void;
   plugin.mailer.send = async () => { calls++; await new Promise<void>(resolve => { finish = resolve; }); };
   const pending = modal.send();
+  await Promise.resolve();
   modal.close();
   finish();
   await pending;
@@ -126,4 +129,42 @@ test('settings use a SecretComponent without a password field', () => {
   assert.equal(tab.containerEl.querySelectorAll('[data-secret-component]').length, 1);
   assert.equal(tab.containerEl.querySelector('input[type="password"]'), null);
   assert.match(tab.containerEl.textContent!, /No email is sent/);
+});
+
+test('sharing a configured vault preserves its original local settings and uses the shared password', async () => {
+  const { plugin, app } = fixture();
+  plugin.settings.smtpHost = 'smtp.example.com';
+  plugin.settings.smtpUsername = 'sender@example.com';
+  const original = { ...plugin.settings };
+  await plugin.saveData(original);
+  await mkdir('artifacts/ui-profile-tests', { recursive: true });
+  const root = await mkdtemp(resolve('artifacts/ui-profile-tests/run-'));
+  const store = new SharedProfileStore(root, { protect: async () => 'protected-fixture', unprotect: async () => 'shared-test-secret' });
+  Object.defineProperty(plugin, 'sharedProfile', { get: () => store });
+  await plugin.shareSetup();
+  assert.equal(plugin.settings.profileMode, 'shared');
+  assert.equal(await plugin.getSecret(), 'shared-test-secret');
+  const tab = new api.MdToKindleSettingTab(app as never, plugin);
+  tab.display();
+  assert.equal(tab.containerEl.querySelector('[data-secret-component]'), null);
+  assert.match(tab.containerEl.textContent!, /Shared email profile is active/);
+  await plugin.useVaultSettings();
+  assert.deepEqual(plugin.settings, original);
+  assert.equal(await plugin.getSecret(), 'test-secret');
+});
+
+test('a running vault picks up helper enrollment before the next preview', async () => {
+  const { plugin } = fixture();
+  await mkdir('artifacts/ui-profile-tests', { recursive: true });
+  const root = await mkdtemp(resolve('artifacts/ui-profile-tests/run-'));
+  const store = new SharedProfileStore(root, { protect: async () => 'protected-fixture', unprotect: async () => 'shared-test-secret' });
+  await store.create({ ...DEFAULT_SETTINGS, kindleEmail: 'reader@kindle.com', senderEmail: 'shared@example.com', smtpHost: 'smtp.example.com', smtpUsername: 'shared@example.com', passwordSecret: 'test-reference' }, 'synthetic-secret');
+  Object.defineProperty(plugin, 'sharedProfile', { get: () => store });
+  plugin.settings.senderEmail = '';
+  plugin.settings.passwordSecret = '';
+  await plugin.saveData({ profileMode: 'shared' });
+  await plugin.refreshSharedSettings();
+  assert.equal(plugin.settings.senderEmail, 'shared@example.com');
+  assert.equal(plugin.settings.profileMode, 'shared');
+  assert.equal(await plugin.getSecret(), 'shared-test-secret');
 });

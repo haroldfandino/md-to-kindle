@@ -1,6 +1,7 @@
 // A deliberately small API double for exercising plugin lifecycle and dialogs.
 // It is used only by tests and is never included in the distributable.
 export const notices: string[] = [];
+export const Platform = { isWin: true };
 export interface TestApp {
   vault: { getFiles(): TFile[]; read(file: TFile): Promise<string>; readBinary(file: TFile): Promise<ArrayBuffer> };
   workspace: { getActiveViewOfType(type: unknown): MarkdownView | null; on(event: string, callback: (...args: unknown[]) => void): unknown };

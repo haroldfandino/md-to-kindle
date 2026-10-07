@@ -4,14 +4,19 @@ import { imageType, localImageTarget, prepareFile, supportedFile, type PreparedD
 import { MdToKindleMailer } from './mail';
 import { attachmentLimit, loadSettings, type MdToKindleSettings } from './settings';
 import { MdToKindleSettingTab, FilePicker, SendPreview } from './ui';
+import { SharedProfileStore } from './shared-profile';
 
 export default class MdToKindlePlugin extends Plugin {
   settings: MdToKindleSettings = loadSettings(null);
   readonly mailer = new MdToKindleMailer();
   private preparing = false;
+  private get sharedProfile(): SharedProfileStore { return new SharedProfileStore(); }
 
   async onload(): Promise<void> {
     this.settings = loadSettings(await this.loadData());
+    if (this.settings.profileMode === 'shared') {
+      try { await this.refreshSharedSettings(); } catch { new Notice('The shared md-to-kindle profile is unavailable. Open its settings to configure it.'); }
+    }
     this.addSettingTab(new MdToKindleSettingTab(this.app, this));
     this.addCommand({
       id: 'send-current-note',
@@ -36,11 +41,39 @@ export default class MdToKindlePlugin extends Plugin {
   }
 
   async saveSettings(): Promise<void> {
-    await this.saveData(loadSettings(this.settings));
+    if (this.settings.profileMode === 'shared') await this.sharedProfile.updateSettings(this.settings);
+    else await this.saveData(loadSettings(this.settings));
   }
 
-  getSecret(): string | null {
-    return this.settings.passwordSecret ? this.app.secretStorage.getSecret(this.settings.passwordSecret) : null;
+  async getSecret(settings: MdToKindleSettings = this.settings): Promise<string | null> {
+    if (settings.profileMode === 'shared') return this.sharedProfile.secret();
+    return settings.passwordSecret ? this.app.secretStorage.getSecret(settings.passwordSecret) : null;
+  }
+
+  async refreshSharedSettings(): Promise<void> {
+    // The helper can enroll an already-open vault. Read its saved mode before
+    // preparing a send rather than waiting for Obsidian to refresh the plugin.
+    const saved = loadSettings(await this.loadData());
+    if (saved.profileMode !== this.settings.profileMode) this.settings = saved;
+    if (this.settings.profileMode === 'shared') this.settings = await this.sharedProfile.settings();
+  }
+
+  async shareSetup(): Promise<void> {
+    if (this.settings.profileMode === 'shared') throw new Error('This vault already uses the shared profile. Choose vault-only settings first to replace its password.');
+    await this.sharedProfile.create(this.settings, await this.getSecret());
+    const local = loadSettings(await this.loadData());
+    await this.saveData({ ...local, profileMode: 'shared' });
+    this.settings = await this.sharedProfile.settings();
+  }
+
+  async useVaultSettings(): Promise<void> {
+    this.settings = { ...loadSettings(await this.loadData()), profileMode: 'vault' };
+    await this.saveData(this.settings);
+  }
+
+  async onExternalSettingsChange(): Promise<void> {
+    this.settings = loadSettings(await this.loadData());
+    await this.refreshSharedSettings();
   }
 
   async prepareDocument(file: TFile, editorContent?: string): Promise<PreparedDocument> {
@@ -69,6 +102,7 @@ export default class MdToKindlePlugin extends Plugin {
     if (this.preparing) { new Notice('A document preview is already being prepared.'); return; }
     this.preparing = true;
     try {
+      await this.refreshSharedSettings();
       const document = await this.prepareDocument(file, editorContent);
       new SendPreview(this.app, this, document).open();
     } catch (error) {

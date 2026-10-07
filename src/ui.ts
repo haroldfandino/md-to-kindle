@@ -1,4 +1,4 @@
-import { Modal, Notice, PluginSettingTab, SecretComponent, Setting, SuggestModal, TFile, type App, type ButtonComponent, type TextComponent } from 'obsidian';
+import { Modal, Notice, PluginSettingTab, SecretComponent, Setting, SuggestModal, TFile, Platform, type App, type ButtonComponent, type TextComponent } from 'obsidian';
 import type MdToKindlePlugin from './main';
 import { supportedFile, type PreparedDocument } from './files';
 import { validateRecipient, type MdToKindleSettings } from './settings';
@@ -93,7 +93,7 @@ export class SendPreview extends Modal {
     this.status.setText('Submitting your attachment to your email provider…');
     try {
       validateRecipient(this.recipient);
-      const secret = this.sendSettings.passwordSecret ? this.app.secretStorage.getSecret(this.sendSettings.passwordSecret) : null;
+      const secret = await this.plugin.getSecret(this.sendSettings);
       await this.plugin.mailer.send(this.sendSettings, secret, this.recipient, this.document);
       this.submitted = true;
       if (!this.closed) {
@@ -125,6 +125,24 @@ export class MdToKindleSettingTab extends PluginSettingTab {
   display(): void {
     const { containerEl: content } = this;
     content.empty();
+    if (Platform.isWin) {
+      new Setting(content).setName('All vaults on this computer').setHeading();
+      const shared = this.plugin.settings.profileMode === 'shared';
+      new Setting(content).setName(shared ? 'Shared email profile is active' : 'Share your configured email profile')
+        .setDesc(shared ? 'Changes here apply to every vault using this Windows account’s shared profile. Your password is protected outside your vaults.' : 'Copies this working setup and app password into a Windows-protected local profile for the automatic all-vault helper. No password is copied into vault settings.')
+        .addButton(button => button.setButtonText(shared ? 'Use vault-only settings' : 'Share this setup on this computer').onClick(async () => {
+          button.setDisabled(true);
+          try {
+            if (shared) await this.plugin.useVaultSettings();
+            else await this.plugin.shareSetup();
+            new Notice(shared ? 'This vault now uses its own settings.' : 'Shared email profile saved for this Windows account.');
+            this.display();
+          } catch (error) {
+            new Notice(error instanceof Error ? error.message : 'The shared profile could not be updated.');
+            button.setDisabled(false);
+          }
+        }));
+    }
     new Setting(content).setName('Kindle').setHeading();
     this.textSetting('Kindle email', 'Your editable Send to Kindle recipient.', 'kindleEmail', 'you@kindle.com');
     const guide = content.createEl('p', { cls: 'md-to-kindle-help' });
@@ -144,7 +162,9 @@ export class MdToKindleSettingTab extends PluginSettingTab {
           this.plugin.settings.tlsMode = value === 'tls' ? 'tls' : 'starttls';
           await this.plugin.saveSettings();
         }));
-    new Setting(content).setName('App password').setDesc('Select or create a secret in Obsidian’s Keychain. Only its name is saved in plugin settings.')
+    if (this.plugin.settings.profileMode === 'shared') {
+      content.createEl('p', { text: 'App password: supplied by the Windows-protected shared profile. To replace it, switch this vault to vault-only settings, link the new Keychain secret, then share the setup again.', cls: 'md-to-kindle-help' });
+    } else new Setting(content).setName('App password').setDesc('Select or create a secret in Obsidian’s Keychain. Only its name is saved in plugin settings.')
       .addComponent(element => new SecretComponent(this.app, element).setValue(this.plugin.settings.passwordSecret).onChange(value => {
         this.plugin.settings.passwordSecret = value || '';
         void this.plugin.saveSettings();
@@ -154,7 +174,8 @@ export class MdToKindleSettingTab extends PluginSettingTab {
       .addButton(button => button.setButtonText('Test connection').onClick(async () => {
         button.setDisabled(true).setButtonText('Testing…');
         try {
-          await this.plugin.mailer.verify({ ...this.plugin.settings }, this.plugin.getSecret());
+          await this.plugin.refreshSharedSettings();
+          await this.plugin.mailer.verify({ ...this.plugin.settings }, await this.plugin.getSecret());
           new Notice('SMTP connection and authentication succeeded. No email was sent.');
         } catch (error) {
           new Notice(error instanceof Error ? error.message : 'Connection test failed.');

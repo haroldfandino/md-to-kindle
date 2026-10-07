@@ -109,6 +109,17 @@ test('implicit TLS authenticates and sends with certificate verification', async
   } finally { await smtp.close(); }
 });
 
+test('shared profile authenticates and sends without a vault-specific Keychain reference', async () => {
+  const smtp = await smtpServer();
+  try {
+    const shared = { ...smtp.config, profileMode: 'shared' as const, passwordSecret: '' };
+    await smtp.mailer.verify(shared, password);
+    assert.equal(smtp.messages.length, 0);
+    await smtp.mailer.send(shared, password, settings.kindleEmail, attachment);
+    assert.equal(smtp.messages.length, 1);
+  } finally { await smtp.close(); }
+});
+
 test('untrusted certificates and wrong passwords fail without sending', async () => {
   const smtp = await smtpServer();
   try {

@@ -10,7 +10,7 @@ Desktop only: Windows, macOS, and Linux. Requires Obsidian **1.11.4+** and an SM
 
 Until a community-directory listing is approved:
 
-1. Download and extract `md-to-kindle-0.1.1.zip`.
+1. Download and extract `md-to-kindle-0.2.0.zip`.
 2. Copy its `md-to-kindle` folder into `<vault>/<config-dir>/plugins/`. The default configuration directory is `.obsidian`.
 3. Open Obsidian → Settings → Community plugins. Enable community plugins if needed, then enable **md-to-kindle**. Restart Obsidian if it does not appear.
 4. Open the plugin settings and configure your recipient and email account.
@@ -24,6 +24,20 @@ powershell -File .\scripts\install.ps1 -VaultPath 'C:\path\to\vault'
 For a custom Obsidian configuration folder, add `-ConfigDir '.my-obsidian'`. Existing email settings are preserved. A local developer recipient preset, when present, can be applied with `-UseLocalRecipient`; that preset is excluded from source control and public releases.
 
 Version 0.1.1 renames the plugin and its ID to **md-to-kindle**. If you installed version 0.1.0 under `kindle-courier`, disable that plugin, install the new folder, and copy its `data.json` into `md-to-kindle` before enabling the new plugin to preserve your settings. This migration is unnecessary for a fresh installation.
+
+## Automatic setup across vaults on Windows
+
+Version 0.2.0 adds an optional **Windows background helper** with one shared email profile. The standard plugin still works on Windows, macOS, and Linux; the automatic helper currently requires Windows and Node.js 22+.
+
+1. Update md-to-kindle in the vault where sending already works and reload the plugin.
+2. In **Settings → md-to-kindle**, click **Share this setup on this computer**. The linked app password is transferred directly into a Windows-protected local profile, without entering it again.
+3. Extract `md-to-kindle-helper-0.2.0.zip` and run `powershell -File .\scripts\install-helper.ps1` from its folder. The same command works in this source project after `npm run release`.
+
+The helper starts silently now and at Windows sign-in. It discovers current and future vaults from Obsidian's registry and installs only md-to-kindle. Vaults must allow community plugins; the helper does not change Restricted Mode. Already-open vaults may need one reload to discover the new plugin. Each Windows user/computer needs its own profile.
+
+You can exclude vaults, pause the helper, or stop it with `powershell -File .\scripts\stop-helper.ps1 -DisableStartup`. Original vault settings and other plugins are preserved. The helper does not send email, read notes, decrypt passwords, or download updates. Shared-mode settings apply to all participating vaults; **Use vault-only settings** restores a vault's previous setup.
+
+See [automatic setup, exclusions, updates and uninstall instructions](docs/AUTOMATIC_SETUP.md) for details.
 
 ## Configure email
 
@@ -46,7 +60,7 @@ You approve the **sending account** here; your Kindle address belongs in the sep
 
 For Gmail: use `smtp.gmail.com`, port `587`, **Required STARTTLS**, and your full Gmail address as the username. Create an [app password](https://support.google.com/accounts/answer/185833) after enabling 2-Step Verification. Some managed accounts and security configurations prohibit app passwords. This release does not offer OAuth sign-in; use another SMTP account if yours requires it. Port `465` with **Implicit TLS** is also supported when your provider specifies it. Certificate validation cannot be disabled.
 
-Passwords are accessed only for an explicit send or connection test. Obsidian manages Keychain storage; this plugin does not supply additional encryption or sync passwords itself. Configure the secret on each device where needed.
+In vault-only mode, passwords are accessed through Obsidian's Keychain only for an explicit send, connection test, or sharing action. In shared mode, the plugin unlocks the Windows-protected profile for sends/tests. The helper itself does not read or decrypt passwords. Shared profiles are not synced by the plugin. Configure the secret/profile on each device where needed.
 
 ## Send
 
@@ -69,9 +83,11 @@ One attachment is sent per email. Default limit: **20 MB**, configurable from **
 
 ## Privacy
 
-Conversion happens locally. For sends, the selected document and its supported embedded local images go through your configured email provider to Amazon. Existing HTML/EPUB files are not sanitized or modified. SMTP settings and recipient addresses are stored in this plugin’s `data.json`; these may be included by vault backup or sync tools. App passwords are stored through Obsidian SecretStorage, not in `data.json`. No password, note content, or raw SMTP response is logged by the plugin.
+Conversion happens locally. For sends, the selected document and its supported embedded local images go through your configured email provider to Amazon. Existing HTML/EPUB files are not sanitized or modified. Vault-only settings and secret references are stored in this plugin's `data.json`; these may be included by vault backup or sync tools. Shared settings and the encrypted password are stored outside vaults in the Windows user's local application-data directory. Original vault settings are retained for rollback. No password, note content, or raw SMTP response is logged by the plugin.
 
 There is no analytics, telemetry, advertising, hosted relay, whole-vault upload, or background sending. Normal operation makes network connections only to the user-configured SMTP server (and normal DNS resolution). Setup links open Amazon or Google in a browser when clicked. Obsidian and email-provider account requirements, costs, and limits apply independently.
+
+The optional helper reads registered vault paths and writes md-to-kindle assets, its profile-mode flag, and the existing enabled-plugin list. It never reads notes. The shared-profile feature accesses files outside the current vault and invokes Windows password protection through a fixed, hidden PowerShell process. The encrypted password is protected for the current Windows user; other programs running as that user can access it. No plaintext fallback is used.
 
 ## Development
 

@@ -25,4 +25,12 @@ Generated ebooks: `md-to-kindle sample.epub`, `Plain note.epub`, and `Sanitized 
 
 Automated dialog and lifecycle checks use an API double and DOM. On **2026-10-07**, version **0.1.1** was also installed and enabled in the real **Obsidian 1.14.4** app on Windows. The plugin's settings page loaded successfully, including the SMTP configuration and Keychain selector. macOS and Linux runtime smoke tests remain unverified.
 
-No real SMTP account was configured and no external email was sent. Kindle arrival and rendering remain unverified pending local sender setup and device access. The source repository is `haroldfandino/md-to-kindle`; the GitHub release and community-directory submission have been prepared but not published.
+The user subsequently confirmed successful Gmail authentication and Kindle delivery using vault-only mode. The source repository is `haroldfandino/md-to-kindle`; the GitHub release and community-directory submission have been prepared but not published.
+
+## Version 0.2.0: automatic vault helper and shared profile
+
+On **2026-10-07**, strict typechecking, all **42 automated tests**, plugin/helper release allowlists and archive checksums passed. Tests cover real Windows DPAPI with synthetic secrets, shared-profile SMTP authentication without a per-vault Keychain reference, helper discovery of a newly registered vault, duplicate-process prevention, shutdown, invalid registries, exclusions, custom configuration directories, linked-path rejection, preservation of unrelated plugins/settings, and deliberate disable/uninstall behavior.
+
+The helper was installed on Windows with sign-in startup. A real configured vault successfully shared its linked app password directly into Windows-protected storage. The helper's status confirmed that the global profile was available and registered vaults were enrolled, with vaults lacking community-plugin configuration held pending that prerequisite. Existing per-vault settings were retained. Already-open plugin instances now read their saved profile mode before preparing a preview.
+
+No private sender/recipient addresses, plaintext passwords, vault contents, or local helper state are included in public release assets. Live cross-vault SMTP verification is recorded separately after the corresponding app test; automated SMTP tests send only to a local test server. macOS/Linux helper operation is unsupported; the standard plugin still supports those platforms in vault-only mode.

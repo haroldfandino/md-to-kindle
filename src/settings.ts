@@ -1,6 +1,7 @@
 export type TlsMode = 'starttls' | 'tls';
 
 export interface MdToKindleSettings {
+  profileMode: 'vault' | 'shared';
   kindleEmail: string;
   senderEmail: string;
   smtpHost: string;
@@ -12,6 +13,7 @@ export interface MdToKindleSettings {
 }
 
 export const DEFAULT_SETTINGS: Readonly<MdToKindleSettings> = Object.freeze({
+  profileMode: 'vault',
   kindleEmail: '',
   senderEmail: '',
   smtpHost: '',
@@ -27,6 +29,7 @@ export function loadSettings(data: unknown): MdToKindleSettings {
   const result = { ...DEFAULT_SETTINGS };
   if (!data || typeof data !== 'object') return result;
   const input = data as Record<string, unknown>;
+  if (input.profileMode === 'shared') result.profileMode = 'shared';
   for (const key of ['kindleEmail', 'senderEmail', 'smtpHost', 'smtpUsername', 'passwordSecret'] as const) {
     if (typeof input[key] === 'string') result[key] = input[key].trim();
   }
@@ -54,7 +57,9 @@ export function validateSmtp(settings: MdToKindleSettings, secret: string | null
     throw new Error('The SMTP port must be a whole number from 1 to 65535.');
   }
   if (!settings.smtpUsername || /[\r\n]/.test(settings.smtpUsername)) throw new Error('Enter your SMTP username.');
-  if (!settings.passwordSecret || !secret) throw new Error('Select an app password in the Obsidian Keychain.');
+  if (!secret || (settings.profileMode !== 'shared' && !settings.passwordSecret)) {
+    throw new Error(settings.profileMode === 'shared' ? 'The global email profile has no available app password.' : 'Select an app password in the Obsidian Keychain.');
+  }
   if (settings.tlsMode !== 'tls' && settings.tlsMode !== 'starttls') throw new Error('Choose a supported TLS mode.');
 }
 

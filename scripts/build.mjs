@@ -22,4 +22,5 @@ if (process.argv.includes('--watch')) {
   const result = await build(options);
   await mkdir('artifacts', { recursive: true });
   await writeFile('artifacts/bundle-meta.json', JSON.stringify(result.metafile, null, 2));
+  await build({ entryPoints: ['src/helper-cli.ts'], outfile: 'helper.cjs', bundle: true, platform: 'node', format: 'cjs', target: 'node22', minify: true, logLevel: 'info' });
 }

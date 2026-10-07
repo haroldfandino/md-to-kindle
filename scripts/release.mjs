@@ -20,5 +20,14 @@ for (const filename of ['main.js', 'manifest.json', 'styles.css', 'LICENSE', 'TH
 const filename = `dist/${manifest.id}-${manifest.version}.zip`;
 const bytes = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 await writeFile(filename, bytes);
+const helper = new JSZip();
+helper.file('md-to-kindle-helper/helper.cjs', await readFile('helper.cjs'));
+for (const name of ['install-helper.ps1', 'stop-helper.ps1']) helper.file(`md-to-kindle-helper/scripts/${name}`, await readFile(`scripts/${name}`));
+for (const name of ['README.md', 'LICENSE', 'docs/AUTOMATIC_SETUP.md']) helper.file(`md-to-kindle-helper/${name}`, await readFile(name));
+for (const name of ['main.js', 'manifest.json', 'styles.css', 'LICENSE', 'THIRD_PARTY_NOTICES.md']) helper.file(`md-to-kindle-helper/dist/md-to-kindle/${name}`, await readFile(name));
+const helperName = `md-to-kindle-helper-${manifest.version}.zip`;
+const helperBytes = await helper.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
+await writeFile(`dist/${helperName}`, helperBytes);
+checksums.push(`${createHash('sha256').update(helperBytes).digest('hex')}  ${helperName}`);
 await writeFile('dist/SHA256SUMS.txt', `${checksums.join('\n')}\n${createHash('sha256').update(bytes).digest('hex')}  ${manifest.id}-${manifest.version}.zip\n`);
 console.log(`Release prepared: ${filename}`);
