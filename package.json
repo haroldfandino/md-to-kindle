@@ -1,0 +1,44 @@
+{
+  "name": "kindle-courier",
+  "version": "0.1.0",
+  "description": "Send Obsidian notes and supported documents to Kindle through your own email account.",
+  "type": "module",
+  "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/haroldfandino/md-to-kindle.git"
+  },
+  "scripts": {
+    "dev": "node scripts/build.mjs --watch",
+    "build": "tsc --noEmit && node scripts/build.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "release": "npm run build && node scripts/licenses.mjs && node scripts/release.mjs && node scripts/verify-release.mjs",
+    "samples": "tsx scripts/samples.ts"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1",
+    "markdown-it": "^14.1.0",
+    "nodemailer": "^10.0.15",
+    "sanitize-html": "^2.17.0"
+  },
+  "devDependencies": {
+    "@types/jsdom": "^21.1.7",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^22.0.0",
+    "@types/nodemailer": "^7.0.0",
+    "@types/sanitize-html": "^2.16.0",
+    "@types/smtp-server": "^3.5.0",
+    "esbuild": "^0.25.0",
+    "jsdom": "^26.0.0",
+    "obsidian": "1.11.4",
+    "selfsigned": "^5.5.0",
+    "smtp-server": "^3.16.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "overrides": {
+    "moment": "^2.31.0"
+  }
+}

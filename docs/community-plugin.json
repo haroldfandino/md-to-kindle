@@ -1,0 +1,7 @@
+{
+  "id": "kindle-courier",
+  "name": "Kindle Courier",
+  "author": "Harold Fandino",
+  "repo": "haroldfandino/md-to-kindle",
+  "description": "Convert a note to EPUB or send a supported file to Kindle through your own email account."
+}

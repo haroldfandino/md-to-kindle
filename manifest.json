@@ -1,0 +1,9 @@
+{
+  "id": "kindle-courier",
+  "name": "Kindle Courier",
+  "version": "0.1.0",
+  "minAppVersion": "1.11.4",
+  "description": "Convert a note to EPUB or send a supported file to Kindle through your own email account.",
+  "author": "Harold Fandino",
+  "isDesktopOnly": true
+}

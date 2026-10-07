@@ -1,0 +1,9 @@
+node_modules/
+main.js
+dist/
+artifacts/
+.local/
+.tools/
+*.log
+.env*
+data.json

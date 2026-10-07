@@ -1,0 +1,14 @@
+.kindle-courier-modal { width: min(760px, 92vw); }
+.kindle-courier-file-meta { font-weight: var(--font-semibold); overflow-wrap: anywhere; }
+.kindle-courier-file-path, .kindle-courier-help { color: var(--text-muted); font-size: var(--font-small); }
+.kindle-courier-file-path { overflow-wrap: anywhere; }
+.kindle-courier-warnings { padding: 12px 16px; background: var(--background-secondary); border-left: 3px solid var(--text-warning); border-radius: var(--radius-s); margin: 12px 0; overflow-wrap: anywhere; }
+.kindle-courier-warnings ul { margin-bottom: 0; }
+.kindle-courier-book-preview { max-height: 45vh; overflow: auto; border: 1px solid var(--background-modifier-border); border-radius: var(--radius-s); padding: 16px; margin: 12px 0; font-family: var(--font-text); line-height: 1.5; }
+.kindle-courier-book-preview img { max-width: 100%; height: auto; }
+.kindle-courier-book-preview pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.kindle-courier-book-preview table { border-collapse: collapse; width: 100%; }
+.kindle-courier-book-preview th, .kindle-courier-book-preview td { border: 1px solid var(--background-modifier-border); padding: 6px; }
+.kindle-courier-book-preview h1, .kindle-courier-book-preview h2, .kindle-courier-book-preview h3 { line-height: 1.25; }
+.kindle-courier-status { min-height: 2em; padding: 8px 0; overflow-wrap: anywhere; }
+.kindle-courier-modal summary { cursor: pointer; font-weight: var(--font-semibold); }
