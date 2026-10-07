@@ -4,6 +4,8 @@ Send a note or supported document from Obsidian to your Kindle through your own 
 
 Desktop only: Windows, macOS, and Linux. Requires Obsidian **1.11.4+** and an SMTP account that accepts an app password or password authentication. No hosted service or subscription is required by this plugin.
 
+> **Required before sending:** add the email account connected to md-to-kindle to Amazon's **Approved Personal Document E-mail List**. Use your **sender email**, not your `@kindle.com` recipient. Amazon will not accept documents from an unapproved sender, even if **Test connection** succeeds.
+
 ## Install
 
 Until a community-directory listing is approved:
@@ -31,6 +33,16 @@ Version 0.1.1 renames the plugin and its ID to **md-to-kindle**. If you installe
 4. Enter the sender, SMTP host, port, username, and TLS mode provided by your email service.
 5. Select or create your app password using the **App password** Keychain selector. The plugin saves only the secret’s name.
 6. Click **Test connection**. This authenticates without sending mail; it cannot check your Amazon approval list or delivery.
+
+### Approve your connected email in Amazon
+
+1. Sign in to the Amazon account that owns your Kindle and open **Manage Your Content and Devices**.
+2. Select **Preferences**, then expand **Personal Document Settings**.
+3. Under **Approved Personal Document E-mail List**, choose **Add a new approved e-mail address**.
+4. Enter the exact email address configured as **Sender email** in md-to-kindle, then save it. For example, if you connected a Gmail account, approve that Gmail address.
+5. Confirm that the sender appears in the approved list before sending your first note.
+
+You approve the **sending account** here; your Kindle address belongs in the separate **Send-to-Kindle E-Mail Settings** section. If you change the connected sender later, approve the new address as well. A successful SMTP connection test confirms access to your email provider, not Amazon's approval. See [Amazon's email requirements](https://digprjsurvey.amazon.co.uk/csad/help/node/G7NECT4B4ZWHQ8WV).
 
 For Gmail: use `smtp.gmail.com`, port `587`, **Required STARTTLS**, and your full Gmail address as the username. Create an [app password](https://support.google.com/accounts/answer/185833) after enabling 2-Step Verification. Some managed accounts and security configurations prohibit app passwords. This release does not offer OAuth sign-in; use another SMTP account if yours requires it. Port `465` with **Implicit TLS** is also supported when your provider specifies it. Certificate validation cannot be disabled.
 
