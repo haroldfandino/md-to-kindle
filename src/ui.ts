@@ -1,7 +1,7 @@
 import { Modal, Notice, PluginSettingTab, SecretComponent, Setting, SuggestModal, TFile, type App, type ButtonComponent, type TextComponent } from 'obsidian';
-import type KindleCourier from './main';
+import type MdToKindlePlugin from './main';
 import { supportedFile, type PreparedDocument } from './files';
-import { validateRecipient, type CourierSettings } from './settings';
+import { validateRecipient, type MdToKindleSettings } from './settings';
 
 const AMAZON_SETTINGS = 'https://www.amazon.com/hz/mycd/myx#/home/settings/payment';
 const EMAIL_GUIDE = 'https://www.amazon.com/sendtokindle/email';
@@ -21,7 +21,7 @@ export class FilePicker extends SuggestModal<TFile> {
 
   renderSuggestion(file: TFile, element: HTMLElement): void {
     element.createDiv({ text: file.name });
-    element.createDiv({ text: file.path, cls: 'kindle-courier-file-path' });
+    element.createDiv({ text: file.path, cls: 'md-to-kindle-file-path' });
   }
 
   onChooseSuggestion(file: TFile): void { this.choose(file); }
@@ -35,9 +35,9 @@ export class SendPreview extends Modal {
   private sending = false;
   private submitted = false;
   private closed = false;
-  private readonly sendSettings: CourierSettings;
+  private readonly sendSettings: MdToKindleSettings;
 
-  constructor(app: App, private readonly plugin: KindleCourier, private readonly document: PreparedDocument) {
+  constructor(app: App, private readonly plugin: MdToKindlePlugin, private readonly document: PreparedDocument) {
     super(app);
     this.sendSettings = { ...plugin.settings };
     this.recipient = plugin.settings.kindleEmail;
@@ -45,20 +45,20 @@ export class SendPreview extends Modal {
 
   onOpen(): void {
     this.closed = false;
-    this.modalEl.addClass('kindle-courier-modal');
+    this.modalEl.addClass('md-to-kindle-modal');
     const content = this.contentEl;
     content.empty();
     content.createEl('h2', { text: 'Send to Kindle' });
-    content.createEl('p', { text: `${this.document.filename} · ${(this.document.content.length / 1_000_000).toFixed(2)} MB`, cls: 'kindle-courier-file-meta' });
-    new Setting(content).setName('Kindle email').setDesc('This recipient applies to this send. Change the default in Kindle Courier settings.')
+    content.createEl('p', { text: `${this.document.filename} · ${(this.document.content.length / 1_000_000).toFixed(2)} MB`, cls: 'md-to-kindle-file-meta' });
+    new Setting(content).setName('Kindle email').setDesc('This recipient applies to this send. Change the default in md-to-kindle settings.')
       .addText(input => {
         this.recipientInput = input;
         input.setPlaceholder('you@kindle.com').setValue(this.recipient).onChange(value => { this.recipient = value.trim(); });
         input.inputEl.type = 'email';
       });
-    content.createEl('p', { text: `Sending from: ${this.sendSettings.senderEmail || 'Set your sender address in Kindle Courier settings'}` });
+    content.createEl('p', { text: `Sending from: ${this.sendSettings.senderEmail || 'Set your sender address in md-to-kindle settings'}` });
     if (this.document.warnings.length) {
-      const warnings = content.createDiv({ cls: 'kindle-courier-warnings' });
+      const warnings = content.createDiv({ cls: 'md-to-kindle-warnings' });
       warnings.createEl('strong', { text: 'Before you send' });
       const list = warnings.createEl('ul');
       for (const warning of this.document.warnings) list.createEl('li', { text: warning });
@@ -66,7 +66,7 @@ export class SendPreview extends Modal {
     if (this.document.previewHtml) {
       const details = content.createEl('details');
       details.createEl('summary', { text: 'Read the EPUB preview' });
-      const preview = details.createDiv({ cls: 'kindle-courier-book-preview' });
+      const preview = details.createDiv({ cls: 'md-to-kindle-book-preview' });
       const parsed = new DOMParser().parseFromString(this.document.previewHtml, 'text/html');
       // Content was sanitized and asset URLs replaced during EPUB preparation.
       // External links are inert in this preview to avoid leaving the dialog.
@@ -75,8 +75,8 @@ export class SendPreview extends Modal {
     } else {
       content.createEl('p', { text: 'The selected file will be attached unchanged. This dialog does not render existing documents.' });
     }
-    content.createEl('p', { text: 'Add your sender email to Amazon’s Approved Personal Document Email List before sending. Amazon may ask you to verify the email.', cls: 'kindle-courier-help' });
-    this.status = content.createDiv({ cls: 'kindle-courier-status', attr: { role: 'status', 'aria-live': 'polite' } });
+    content.createEl('p', { text: 'Add your sender email to Amazon’s Approved Personal Document Email List before sending. Amazon may ask you to verify the email.', cls: 'md-to-kindle-help' });
+    this.status = content.createDiv({ cls: 'md-to-kindle-status', attr: { role: 'status', 'aria-live': 'polite' } });
     new Setting(content)
       .addButton(button => button.setButtonText('Close').onClick(() => this.close()))
       .addButton(button => {
@@ -119,15 +119,15 @@ export class SendPreview extends Modal {
   }
 }
 
-export class CourierSettingTab extends PluginSettingTab {
-  constructor(app: App, private readonly plugin: KindleCourier) { super(app, plugin); }
+export class MdToKindleSettingTab extends PluginSettingTab {
+  constructor(app: App, private readonly plugin: MdToKindlePlugin) { super(app, plugin); }
 
   display(): void {
     const { containerEl: content } = this;
     content.empty();
     new Setting(content).setName('Kindle').setHeading();
     this.textSetting('Kindle email', 'Your editable Send to Kindle recipient.', 'kindleEmail', 'you@kindle.com');
-    const guide = content.createEl('p', { cls: 'kindle-courier-help' });
+    const guide = content.createEl('p', { cls: 'md-to-kindle-help' });
     guide.appendText('Find your Kindle address and approve your sender in ');
     guide.createEl('a', { text: 'Amazon’s personal document settings', href: AMAZON_SETTINGS, attr: { target: '_blank', rel: 'noopener noreferrer' } });
     guide.appendText('. See the ');
@@ -149,7 +149,7 @@ export class CourierSettingTab extends PluginSettingTab {
         this.plugin.settings.passwordSecret = value || '';
         void this.plugin.saveSettings();
       }));
-    content.createEl('p', { text: 'For Gmail, create an app password with 2-Step Verification enabled. Some accounts or organizations do not allow app passwords. Use another SMTP account if your provider requires OAuth sign-in.', cls: 'kindle-courier-help' });
+    content.createEl('p', { text: 'For Gmail, create an app password with 2-Step Verification enabled. Some accounts or organizations do not allow app passwords. Use another SMTP account if your provider requires OAuth sign-in.', cls: 'md-to-kindle-help' });
     new Setting(content).setName('Test connection').setDesc('Checks encryption and authentication. No email is sent; Kindle approval is not checked.')
       .addButton(button => button.setButtonText('Test connection').onClick(async () => {
         button.setDisabled(true).setButtonText('Testing…');
@@ -164,7 +164,7 @@ export class CourierSettingTab extends PluginSettingTab {
       }));
     new Setting(content).setName('Attachments').setHeading();
     this.numberSetting('Attachment limit (MB)', 'Default: 20 MB. Choose 1–50 MB; email encoding adds size, and your provider may have a lower limit.', 'maxAttachmentMB');
-    content.createEl('p', { text: 'Conversion happens locally. Only the selected document and its supported embedded images are sent through your configured email provider to Amazon. No telemetry or hosted relay is used.', cls: 'kindle-courier-help' });
+    content.createEl('p', { text: 'Conversion happens locally. Only the selected document and its supported embedded images are sent through your configured email provider to Amazon. No telemetry or hosted relay is used.', cls: 'md-to-kindle-help' });
   }
 
   private textSetting(name: string, description: string, key: 'kindleEmail' | 'senderEmail' | 'smtpHost' | 'smtpUsername', placeholder: string): void {

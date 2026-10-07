@@ -12,7 +12,7 @@ const options = {
   minify: true,
   metafile: true,
   logLevel: 'info',
-  banner: { js: '/* Kindle Courier | MIT License | See LICENSE */' },
+  banner: { js: '/* md-to-kindle | MIT License | See LICENSE */' },
 };
 
 if (process.argv.includes('--watch')) {

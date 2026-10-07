@@ -1,6 +1,6 @@
 # Validation results
 
-Verified on **2026-10-06** on Windows with Node.js **24.11.1**.
+Initial validation on **2026-10-06** on Windows with Node.js **24.11.1**. The rename to **md-to-kindle 0.1.1** was checked on **2026-10-07**: all 26 tests, typechecking, release integrity checks, and the renamed sample's EPUBCheck validation passed.
 
 | Check | Result |
 | --- | --- |
@@ -21,8 +21,8 @@ Verified on **2026-10-06** on Windows with Node.js **24.11.1**.
 | Public name/ID in Obsidian community directory | No conflict at time of check |
 | Git exclusion of local recipient, tools and generated assets | Passed |
 
-Generated ebooks: `Kindle Courier sample.epub`, `Plain note.epub`, and `Sanitized content.epub` in `artifacts/samples/`. The third sample intentionally exercises omitted/sanitized content; its EPUB still validates without errors.
+Generated ebooks: `md-to-kindle sample.epub`, `Plain note.epub`, and `Sanitized content.epub` in `artifacts/samples/`. The third sample intentionally exercises omitted/sanitized content; its EPUB still validates without errors.
 
-The Obsidian dialogs and lifecycle were exercised using an API double and DOM, not the installed Obsidian app. A temporary vault verified asset installation; no existing vault was modified during these checks. macOS and Linux runtime smoke tests remain unverified.
+Automated dialog and lifecycle checks use an API double and DOM. On **2026-10-07**, version **0.1.1** was also installed and enabled in the real **Obsidian 1.14.4** app on Windows. The plugin's settings page loaded successfully, including the SMTP configuration and Keychain selector. macOS and Linux runtime smoke tests remain unverified.
 
 No real SMTP account was configured and no external email was sent. Kindle arrival and rendering remain unverified pending local sender setup and device access. The source repository is `haroldfandino/md-to-kindle`; the GitHub release and community-directory submission have been prepared but not published.

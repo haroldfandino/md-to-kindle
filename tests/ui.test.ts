@@ -46,7 +46,7 @@ function fixture() {
     metadataCache: { getFirstLinkpathDest: () => null },
     secretStorage: { getSecret: () => { secretReads++; return 'test-secret'; } },
   };
-  const plugin = new api.KindleCourier(app as never, { id: 'kindle-courier' } as never);
+  const plugin = new api.MdToKindlePlugin(app as never, { id: 'md-to-kindle' } as never);
   plugin.settings = { ...DEFAULT_SETTINGS, kindleEmail: 'reader@kindle.com', passwordSecret: 'test-secret', senderEmail: 'sender@example.com' };
   return { plugin, app, file, view, secretReads: () => secretReads };
 }
@@ -84,7 +84,7 @@ test('preview shows attachment, warnings and recipient; rapid duplicate send and
   assert.match(modal.contentEl.textContent!, /Missing image omitted/);
   const recipient = modal.contentEl.querySelector('input')!;
   assert.equal(recipient.value, 'reader@kindle.com');
-  assert.equal(modal.contentEl.querySelector('.kindle-courier-book-preview a[href]'), null);
+  assert.equal(modal.contentEl.querySelector('.md-to-kindle-book-preview a[href]'), null);
   const first = modal.send();
   await modal.send();
   assert.equal(calls, 1);
@@ -121,7 +121,7 @@ test('validation failures keep the dialog editable; closing a pending send does 
 
 test('settings use a SecretComponent without a password field', () => {
   const { plugin, app } = fixture();
-  const tab = new api.CourierSettingTab(app as never, plugin);
+  const tab = new api.MdToKindleSettingTab(app as never, plugin);
   tab.display();
   assert.equal(tab.containerEl.querySelectorAll('[data-secret-component]').length, 1);
   assert.equal(tab.containerEl.querySelector('input[type="password"]'), null);

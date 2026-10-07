@@ -39,7 +39,7 @@ const greeting = "Hello, Kindle!";
 [[Another note|Readable label]]
 `;
 const fixtures = [
-  { title: 'Kindle Courier sample', markdown },
+  { title: 'md-to-kindle sample', markdown },
   { title: 'Plain note', markdown: 'A short note with no headings.' },
   { title: 'Sanitized content', markdown: '<script>alert(1)</script>\n\n<a href="javascript:alert(1)">Readable label</a>\n\n![Missing](missing.png)\n\n```mermaid\ngraph TD; A --> B\n```' },
 ];

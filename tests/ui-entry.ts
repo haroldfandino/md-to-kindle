@@ -1,3 +1,3 @@
-export { default as KindleCourier } from '../src/main';
-export { SendPreview, FilePicker, CourierSettingTab } from '../src/ui';
+export { default as MdToKindlePlugin } from '../src/main';
+export { SendPreview, FilePicker, MdToKindleSettingTab } from '../src/ui';
 export * from './obsidian-stub';

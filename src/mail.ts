@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 import type { SendMailOptions } from 'nodemailer';
 import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import type { PreparedDocument } from './files';
-import { attachmentLimit, validateRecipient, validateSmtp, type CourierSettings } from './settings';
+import { attachmentLimit, validateRecipient, validateSmtp, type MdToKindleSettings } from './settings';
 
 export interface MailTransport {
   verify(): Promise<unknown>;
@@ -12,7 +12,7 @@ export interface MailTransport {
 
 export type TransportFactory = (options: SMTPTransport.Options) => MailTransport;
 
-export function smtpOptions(settings: CourierSettings, secret: string): SMTPTransport.Options {
+export function smtpOptions(settings: MdToKindleSettings, secret: string): SMTPTransport.Options {
   validateSmtp(settings, secret);
   return {
     host: settings.smtpHost,
@@ -21,7 +21,7 @@ export function smtpOptions(settings: CourierSettings, secret: string): SMTPTran
     requireTLS: settings.tlsMode === 'starttls',
     tls: { rejectUnauthorized: true, servername: settings.smtpHost },
     auth: { user: settings.smtpUsername, pass: secret },
-    name: 'kindle-courier',
+    name: 'md-to-kindle',
     connectionTimeout: 15_000,
     greetingTimeout: 15_000,
     socketTimeout: 60_000,
@@ -33,16 +33,16 @@ export function smtpOptions(settings: CourierSettings, secret: string): SMTPTran
   };
 }
 
-export function mailMessage(settings: CourierSettings, recipient: string, document: PreparedDocument): SendMailOptions {
+export function mailMessage(settings: MdToKindleSettings, recipient: string, document: PreparedDocument): SendMailOptions {
   validateRecipient(recipient);
   if (document.content.length === 0) throw new Error('The attachment is empty.');
   if (document.content.length > attachmentLimit(settings)) throw new Error(`The attachment exceeds your ${settings.maxAttachmentMB} MB limit.`);
   return {
-    from: { address: settings.senderEmail, name: 'Kindle Courier' },
+    from: { address: settings.senderEmail, name: 'md-to-kindle' },
     to: { address: recipient, name: '' },
     envelope: { from: settings.senderEmail, to: [recipient] },
     subject: document.title.replace(/[\r\n]/g, ' ').slice(0, 200),
-    text: 'Sent from Kindle Courier. Your document is attached.',
+    text: 'Sent from md-to-kindle. Your document is attached.',
     attachments: [{ filename: document.filename.replace(/[\r\n]/g, '-'), content: document.content, contentType: document.contentType }],
     disableFileAccess: true,
     disableUrlAccess: true,
@@ -61,18 +61,18 @@ export function explainMailError(error: unknown): string {
   return 'The email provider did not confirm submission. Check its sending rules and your mailbox before trying again.';
 }
 
-export class CourierMailer {
+export class MdToKindleMailer {
   private busy = false;
   constructor(private readonly factory: TransportFactory = options => nodemailer.createTransport(options)) {}
 
   get isBusy(): boolean { return this.busy; }
 
-  async verify(settings: CourierSettings, secret: string | null): Promise<void> {
+  async verify(settings: MdToKindleSettings, secret: string | null): Promise<void> {
     validateSmtp(settings, secret);
     await this.withTransport(settings, secret!, transport => transport.verify());
   }
 
-  async send(settings: CourierSettings, secret: string | null, recipient: string, document: PreparedDocument): Promise<void> {
+  async send(settings: MdToKindleSettings, secret: string | null, recipient: string, document: PreparedDocument): Promise<void> {
     validateSmtp(settings, secret);
     const message = mailMessage(settings, recipient, document);
     await this.withTransport(settings, secret!, async transport => {
@@ -82,7 +82,7 @@ export class CourierMailer {
     });
   }
 
-  private async withTransport(settings: CourierSettings, secret: string, action: (transport: MailTransport) => Promise<unknown>): Promise<void> {
+  private async withTransport(settings: MdToKindleSettings, secret: string, action: (transport: MailTransport) => Promise<unknown>): Promise<void> {
     if (this.busy) throw new Error('An email operation is already in progress.');
     this.busy = true;
     let transport: MailTransport | undefined;

@@ -1,18 +1,18 @@
 import { MarkdownView, Notice, Plugin, TFile } from 'obsidian';
 import { createEpub } from './epub';
 import { imageType, localImageTarget, prepareFile, supportedFile, type PreparedDocument } from './files';
-import { CourierMailer } from './mail';
-import { attachmentLimit, loadSettings, type CourierSettings } from './settings';
-import { CourierSettingTab, FilePicker, SendPreview } from './ui';
+import { MdToKindleMailer } from './mail';
+import { attachmentLimit, loadSettings, type MdToKindleSettings } from './settings';
+import { MdToKindleSettingTab, FilePicker, SendPreview } from './ui';
 
-export default class KindleCourier extends Plugin {
-  settings: CourierSettings = loadSettings(null);
-  readonly mailer = new CourierMailer();
+export default class MdToKindlePlugin extends Plugin {
+  settings: MdToKindleSettings = loadSettings(null);
+  readonly mailer = new MdToKindleMailer();
   private preparing = false;
 
   async onload(): Promise<void> {
     this.settings = loadSettings(await this.loadData());
-    this.addSettingTab(new CourierSettingTab(this.app, this));
+    this.addSettingTab(new MdToKindleSettingTab(this.app, this));
     this.addCommand({
       id: 'send-current-note',
       name: 'Send current note',

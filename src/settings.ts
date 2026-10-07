@@ -1,6 +1,6 @@
 export type TlsMode = 'starttls' | 'tls';
 
-export interface CourierSettings {
+export interface MdToKindleSettings {
   kindleEmail: string;
   senderEmail: string;
   smtpHost: string;
@@ -11,7 +11,7 @@ export interface CourierSettings {
   maxAttachmentMB: number;
 }
 
-export const DEFAULT_SETTINGS: Readonly<CourierSettings> = Object.freeze({
+export const DEFAULT_SETTINGS: Readonly<MdToKindleSettings> = Object.freeze({
   kindleEmail: '',
   senderEmail: '',
   smtpHost: '',
@@ -23,7 +23,7 @@ export const DEFAULT_SETTINGS: Readonly<CourierSettings> = Object.freeze({
 });
 
 // Whitelist persisted fields: never carry a password or unknown keys into data.json.
-export function loadSettings(data: unknown): CourierSettings {
+export function loadSettings(data: unknown): MdToKindleSettings {
   const result = { ...DEFAULT_SETTINGS };
   if (!data || typeof data !== 'object') return result;
   const input = data as Record<string, unknown>;
@@ -45,8 +45,8 @@ export function isEmail(value: string): boolean {
   return /^[a-z\d.!#$%&'*+/=?^_`{|}~-]+@[a-z\d](?:[a-z\d-]*[a-z\d])?(?:\.[a-z\d](?:[a-z\d-]*[a-z\d])?)+$/i.test(value);
 }
 
-export function validateSmtp(settings: CourierSettings, secret: string | null): void {
-  if (!isEmail(settings.senderEmail)) throw new Error('Enter a valid sender email address in Kindle Courier settings.');
+export function validateSmtp(settings: MdToKindleSettings, secret: string | null): void {
+  if (!isEmail(settings.senderEmail)) throw new Error('Enter a valid sender email address in md-to-kindle settings.');
   if (!settings.smtpHost || /[\s/\\:@\r\n]/.test(settings.smtpHost)) {
     throw new Error('Enter an SMTP hostname, without a URL prefix or port.');
   }
@@ -64,7 +64,7 @@ export function validateRecipient(recipient: string): void {
   }
 }
 
-export function attachmentLimit(settings: CourierSettings): number {
+export function attachmentLimit(settings: MdToKindleSettings): number {
   const limit = settings.maxAttachmentMB;
   if (!Number.isFinite(limit) || limit < 1 || limit > 50) {
     throw new Error('The attachment limit must be between 1 and 50 MB.');

@@ -1,6 +1,6 @@
 {
-  "name": "kindle-courier",
-  "version": "0.1.0",
+  "name": "md-to-kindle",
+  "version": "0.1.1",
   "description": "Send Obsidian notes and supported documents to Kindle through your own email account.",
   "type": "module",
   "private": true,

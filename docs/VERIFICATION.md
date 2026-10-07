@@ -13,7 +13,7 @@ UI tests use a DOM and a small Obsidian API double to cover command registration
 Generate fixtures with `npm run samples`. Obtain [EPUBCheck](https://github.com/w3c/epubcheck/releases) and Java 11 or newer, then validate every file in `artifacts/samples/`:
 
 ```sh
-java -jar /path/to/epubcheck.jar "artifacts/samples/Kindle Courier sample.epub"
+java -jar /path/to/epubcheck.jar "artifacts/samples/md-to-kindle sample.epub"
 java -jar /path/to/epubcheck.jar "artifacts/samples/Plain note.epub"
 java -jar /path/to/epubcheck.jar "artifacts/samples/Sanitized content.epub"
 ```

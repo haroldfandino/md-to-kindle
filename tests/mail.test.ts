@@ -5,11 +5,11 @@ import { SMTPServer } from 'smtp-server';
 import type { SMTPServerOptions } from 'smtp-server';
 import { generate } from 'selfsigned';
 import nodemailer from 'nodemailer';
-import { CourierMailer, explainMailError, mailMessage, smtpOptions, type MailTransport } from '../src/mail';
-import { DEFAULT_SETTINGS, loadSettings, validateRecipient, type CourierSettings } from '../src/settings';
+import { MdToKindleMailer, explainMailError, mailMessage, smtpOptions, type MailTransport } from '../src/mail';
+import { DEFAULT_SETTINGS, loadSettings, validateRecipient, type MdToKindleSettings } from '../src/settings';
 import { prepareFile } from '../src/files';
 
-const settings: CourierSettings = { ...DEFAULT_SETTINGS, kindleEmail: 'reader@kindle.com', senderEmail: 'sender@example.com', smtpHost: 'localhost', smtpUsername: 'sender@example.com', passwordSecret: 'test-password' };
+const settings: MdToKindleSettings = { ...DEFAULT_SETTINGS, kindleEmail: 'reader@kindle.com', senderEmail: 'sender@example.com', smtpHost: 'localhost', smtpUsername: 'sender@example.com', passwordSecret: 'test-password' };
 const password = 'test-only-password';
 const attachment = prepareFile('Sample.pdf', Buffer.from('%PDF-1.4\nTest attachment bytes.'));
 
@@ -42,7 +42,7 @@ async function smtpServer(overrides: SMTPServerOptions = {}) {
   const address = server.server.address();
   assert.ok(address && typeof address === 'object');
   const config = { ...settings, smtpPort: address.port, tlsMode: overrides.secure ? 'tls' as const : 'starttls' as const };
-  const mailer = new CourierMailer(options => nodemailer.createTransport({ ...options, tls: { ...options.tls, ca: certificates.cert } }));
+  const mailer = new MdToKindleMailer(options => nodemailer.createTransport({ ...options, tls: { ...options.tls, ca: certificates.cert } }));
   return { server, config, mailer, messages, certificates, authenticated: () => authenticated, tlsUsed: () => tlsUsed, close: () => new Promise<void>(resolve => server.close(() => resolve())) };
 }
 
@@ -74,7 +74,7 @@ test('SMTP options always require encryption and certificates; attachments are i
 
 test('missing credentials, invalid ports and oversized files fail before opening a connection', async () => {
   let connections = 0;
-  const mailer = new CourierMailer(() => { connections++; throw new Error('Unexpected connection'); });
+  const mailer = new MdToKindleMailer(() => { connections++; throw new Error('Unexpected connection'); });
   await assert.rejects(mailer.send(settings, null, settings.kindleEmail, attachment), /app password/);
   await assert.rejects(mailer.verify({ ...settings, smtpPort: 0 }, password), /port/);
   await assert.rejects(mailer.send({ ...settings, maxAttachmentMB: 1 }, password, settings.kindleEmail, { ...attachment, content: Buffer.alloc(1_000_001) }), /limit/);
@@ -112,7 +112,7 @@ test('implicit TLS authenticates and sends with certificate verification', async
 test('untrusted certificates and wrong passwords fail without sending', async () => {
   const smtp = await smtpServer();
   try {
-    await assert.rejects(new CourierMailer().verify(smtp.config, password), /secure SMTP/);
+    await assert.rejects(new MdToKindleMailer().verify(smtp.config, password), /secure SMTP/);
     await assert.rejects(smtp.mailer.send(smtp.config, 'wrong', settings.kindleEmail, attachment), /Authentication failed/);
     assert.equal(smtp.messages.length, 0);
   } finally { await smtp.close(); }
@@ -151,7 +151,7 @@ test('concurrent sends are blocked and failures never trigger an automatic retry
     sendMail: async () => { sends++; return new Promise((_resolve, reject) => { rejectSend = reject; }); },
     close: () => { closed++; },
   };
-  const mailer = new CourierMailer(() => transport);
+  const mailer = new MdToKindleMailer(() => transport);
   const first = mailer.send(settings, password, settings.kindleEmail, attachment);
   await assert.rejects(mailer.send(settings, password, settings.kindleEmail, attachment), /already in progress/);
   rejectSend({ code: 'ETIMEDOUT', response: password });

@@ -19,7 +19,7 @@ for (const path of files) {
 const checksums = await readFile('dist/SHA256SUMS.txt', 'utf8');
 assert.ok(checksums.includes(`${createHash('sha256').update(archiveBytes).digest('hex')}  ${archiveName}`));
 const builtManifest = JSON.parse(await archive.file(`${manifest.id}/manifest.json`).async('string'));
-assert.equal(builtManifest.id, 'kindle-courier');
+assert.equal(builtManifest.id, 'md-to-kindle');
 assert.equal(builtManifest.minAppVersion, '1.11.4');
 assert.equal(builtManifest.isDesktopOnly, true);
 console.log('Release allowlist, private-recipient exclusion, manifest and archive checksum checks passed.');

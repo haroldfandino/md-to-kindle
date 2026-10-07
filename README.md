@@ -1,4 +1,4 @@
-# Kindle Courier
+# md-to-kindle
 
 Send a note or supported document from Obsidian to your Kindle through your own email account. Notes become reflowable EPUBs with heading navigation and local images. Every send starts with a preview and requires a click on **Send**.
 
@@ -8,9 +8,9 @@ Desktop only: Windows, macOS, and Linux. Requires Obsidian **1.11.4+** and an SM
 
 Until a community-directory listing is approved:
 
-1. Download and extract `kindle-courier-0.1.0.zip`.
-2. Copy its `kindle-courier` folder into `<vault>/<config-dir>/plugins/`. The default configuration directory is `.obsidian`.
-3. Open Obsidian → Settings → Community plugins. Enable community plugins if needed, then enable **Kindle Courier**. Restart Obsidian if it does not appear.
+1. Download and extract `md-to-kindle-0.1.1.zip`.
+2. Copy its `md-to-kindle` folder into `<vault>/<config-dir>/plugins/`. The default configuration directory is `.obsidian`.
+3. Open Obsidian → Settings → Community plugins. Enable community plugins if needed, then enable **md-to-kindle**. Restart Obsidian if it does not appear.
 4. Open the plugin settings and configure your recipient and email account.
 
 Developers can run `npm ci && npm run release` to create the archive. On Windows, the included installer copies the release files into a specified vault:
@@ -21,10 +21,12 @@ powershell -File .\scripts\install.ps1 -VaultPath 'C:\path\to\vault'
 
 For a custom Obsidian configuration folder, add `-ConfigDir '.my-obsidian'`. Existing email settings are preserved. A local developer recipient preset, when present, can be applied with `-UseLocalRecipient`; that preset is excluded from source control and public releases.
 
+Version 0.1.1 renames the plugin and its ID to **md-to-kindle**. If you installed version 0.1.0 under `kindle-courier`, disable that plugin, install the new folder, and copy its `data.json` into `md-to-kindle` before enabling the new plugin to preserve your settings. This migration is unnecessary for a fresh installation.
+
 ## Configure email
 
 1. Find your **Send to Kindle email address** in [Amazon’s personal document settings](https://www.amazon.com/hz/mycd/myx#/home/settings/payment).
-2. Enter it in Kindle Courier’s **Kindle email** field. Public installations start with an empty recipient.
+2. Enter it in md-to-kindle’s **Kindle email** field. Public installations start with an empty recipient.
 3. Add your exact **sender email address** to Amazon’s **Approved Personal Document Email List**.
 4. Enter the sender, SMTP host, port, username, and TLS mode provided by your email service.
 5. Select or create your app password using the **App password** Keychain selector. The plugin saves only the secret’s name.
@@ -36,8 +38,8 @@ Passwords are accessed only for an explicit send or connection test. Obsidian ma
 
 ## Send
 
-- Open a note and use **Kindle Courier: Send current note** in the command palette. The current editor text is exported, including edits not yet saved to disk.
-- Use **Kindle Courier: Choose file to send**, or right-click a supported file and choose **Send to Kindle**.
+- Open a note and use **md-to-kindle: Send current note** in the command palette. The current editor text is exported, including edits not yet saved to disk.
+- Use **md-to-kindle: Choose file to send**, or right-click a supported file and choose **Send to Kindle**.
 - Review the filename, attachment size, recipient, and warnings. A converted note has an expandable EPUB preview. Existing files are attached unchanged and are not rendered in the dialog.
 - Click **Send**. Editing the recipient in the dialog changes only that send; update the default in settings.
 
