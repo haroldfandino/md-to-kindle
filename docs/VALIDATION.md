@@ -49,7 +49,7 @@ The [Windows and macOS build run](https://github.com/haroldfandino/md-to-kindle/
 
 On **2026-10-07**, the Explorer registration was expanded to include a Markdown-filtered generic file verb and the current editor's ProgID keys, alongside extension registrations. The registrar now calls `SHChangeNotify(SHCNE_ASSOCCHANGED)` so Explorer refreshes its association cache. The default editor and its existing Open command were checked before and after repair and remained unchanged.
 
-Windows Shell's actual verb enumeration confirmed exactly one **Send to Kindle** entry on the affected iCloud Markdown file and the synthetic `.md` file. It confirmed no such entry on a `.txt` file. A registry-isolated regression test checks filtered registration, quoted filename forwarding and idempotency. All **53 tests** and strict typechecking passed. The repair can run while the standalone app is open, without reinstalling it or restarting Explorer.
+Windows Shell's actual verb enumeration confirmed exactly one **Send to Kindle** entry on the affected iCloud Markdown file and the synthetic `.md` file. It confirmed no such entry on a `.txt` file. All **53 tests** and strict typechecking passed. This integration has since been retired in standalone 0.4.0; its registration code and workflow bundles have been removed.
 
 ## Windows sign-in startup repair
 
@@ -58,3 +58,11 @@ On **2026-10-08**, the old Script Host launcher was replaced with a Startup shor
 All **54 tests**, strict typechecking and release integrity checks passed. The startup regression was also rerun after adding stale-lock coverage: it verifies paths with spaces, legacy entry removal, preservation of unrelated startup entries, delayed file availability, generic failure diagnostics and reinstallation with a dead process lock. Tests use an isolated helper root and synthetic profile, without sending email.
 
 The missing-file error was traced to runtime files visible in the command environment but absent from the normal Windows session. The helper was reinstalled in that Windows session, preserving the protected email profile byte-for-byte. A separate process in that session confirmed the runtime/launcher files, fresh watcher status, all six registered vaults and removal of the old `.vbs` entry. The watcher was then restarted using the exact command and working directory recorded in the Startup shortcut. A full Windows reboot was not performed during verification.
+
+## Standalone 0.4.0: GUI and retirement of desktop actions
+
+On **2026-10-08**, all **58 tests** and strict typechecking passed. The GUI lists Markdown files chosen directly or from a folder, requires explicit selection/review, shows per-document previews and warnings, and sends one attachment per email. Tests cover recursive/shallow discovery, hidden/dependency folders, linked directories, reviewed-byte preservation, duplicate clicks, partial failure and resuming only unattempted documents. The renderer never receives the app password.
+
+An Electron smoke test in a normal Windows session exercised folder and multi-file picker responses, selection, preparation, switching Unicode previews and loading protected synthetic account settings. Rendered empty/review/warning screenshots were inspected; there was no horizontal overflow. No real email was sent. Native picker dialogs were supplied fixture responses in this test.
+
+Legacy registration/Quick Action generation and app file associations were removed from the source. A real Windows cleanup verified zero Send to Kindle Explorer verbs, zero md-to-kindle startup entries and no running helper. The protected email profile and all **24** installed Obsidian plugin/settings files remained byte-for-byte unchanged. The existing Obsidian plugin stays version 0.3.0; the GUI has its own version file. macOS installers remove old workflow bundles, but interactive Mac cleanup/GUI behavior requires verification on a Mac.

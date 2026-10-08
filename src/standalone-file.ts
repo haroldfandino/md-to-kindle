@@ -8,12 +8,34 @@ import type { PreparedDocument } from './files';
 
 export function markdownFile(path: string): boolean { return /^\.(md|markdown)$/i.test(extname(path)); }
 
-export function selectedFileArgument(args: string[]): string | undefined {
-  const index = args.indexOf('--file');
-  if (index === -1) return undefined;
-  const path = args[index + 1];
-  if (!path || !markdownFile(path)) throw new Error('Choose one .md or .markdown file.');
-  return resolve(path);
+export interface MarkdownSource { path: string; label: string }
+
+export async function markdownFolder(path: string, recursive = true): Promise<{ files: MarkdownSource[]; warnings: string[] }> {
+  const root = await realpath(path);
+  if (!(await stat(root)).isDirectory()) throw new Error('Choose a folder containing Markdown files.');
+  const pending = [root];
+  const files: MarkdownSource[] = [];
+  const warnings: string[] = [];
+  let visited = 0;
+  while (pending.length) {
+    const directory = pending.pop()!;
+    let children;
+    try { children = await readdir(directory, { withFileTypes: true }); }
+    catch { warnings.push(`Could not read ${relative(root, directory) || 'the selected folder'}.`); continue; }
+    for (const item of children) {
+      if (++visited > 20_000) throw new Error('This folder is too large to browse. Choose a smaller folder.');
+      if (item.name.startsWith('.') || ['node_modules', '$RECYCLE.BIN', 'System Volume Information'].includes(item.name)) continue;
+      if (item.isSymbolicLink()) continue;
+      const child = join(directory, item.name);
+      if (recursive && item.isDirectory()) pending.push(child);
+      else if (item.isFile() && markdownFile(child)) {
+        files.push({ path: child, label: relative(root, child).split(sep).join('/') });
+        if (files.length > 500) throw new Error('This folder contains more than 500 Markdown files. Choose a smaller folder.');
+      }
+    }
+  }
+  files.sort((left, right) => left.label.localeCompare(right.label, 'en', { numeric: true }));
+  return { files, warnings };
 }
 
 async function sourceRoot(file: string): Promise<string> {

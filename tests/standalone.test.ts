@@ -4,7 +4,7 @@ import { mkdtemp, mkdir, writeFile, readFile, symlink, rm } from 'node:fs/promis
 import { join, dirname, resolve, basename } from 'node:path';
 import { tmpdir } from 'node:os';
 import JSZip from 'jszip';
-import { prepareMarkdownFile, selectedFileArgument, markdownFile } from '../src/standalone-file';
+import { prepareMarkdownFile, markdownFolder, markdownFile } from '../src/standalone-file';
 import { DEFAULT_SETTINGS } from '../src/settings';
 import { SharedProfileStore } from '../src/shared-profile';
 import { MdToKindleMailer } from '../src/mail';
@@ -44,12 +44,26 @@ test('standalone converts Unicode filenames without a browser or Obsidian', asyn
   assert.ok(zip.file('EPUB/images/image-1.png'));
 });
 
-test('file arguments preserve literal paths and reject other formats', () => {
-  const path = resolve('Read me & café.md');
-  assert.equal(selectedFileArgument(['app.exe', '--file', path]), path);
+test('file selection recognizes only Markdown extensions', () => {
   assert.equal(markdownFile('FILE.MARKDOWN'), true);
-  assert.equal(selectedFileArgument(['app.exe']), undefined);
-  assert.throws(() => selectedFileArgument(['--file', 'program.exe']), /Choose one/);
+  assert.equal(markdownFile('program.exe'), false);
+});
+
+test('folder browsing sorts Unicode Markdown files, optionally includes subfolders and excludes hidden folders and links', async t => {
+  const { root } = await fixture(t);
+  await mkdir(join(root, 'Chapters')); await mkdir(join(root, '.private')); await mkdir(join(root, 'node_modules'));
+  await writeFile(join(root, 'Chapters', '02 café.MARKDOWN'), '# Chapter');
+  await writeFile(join(root, '.private', 'private.md'), '# Hidden');
+  await writeFile(join(root, 'node_modules', 'dependency.md'), '# Dependency');
+  const outside = join(root, 'Outside'); await mkdir(outside); await writeFile(join(outside, 'outside.md'), '# Outside');
+  await symlink(outside, join(root, 'Chapters', 'linked'), 'junction');
+  const result = await markdownFolder(join(root, 'Chapters'));
+  assert.deepEqual(result.files.map(file => file.label), ['02 café.MARKDOWN']);
+  const shallow = await markdownFolder(root, false);
+  assert.deepEqual(shallow.files.map(file => file.label), ['Read me café & notes.md']);
+  const recursive = await markdownFolder(root);
+  assert.ok(recursive.files.some(file => file.label === 'Chapters/02 café.MARKDOWN'));
+  assert.ok(recursive.files.every(file => !file.label.includes('.private') && !file.label.includes('node_modules') && !file.label.includes('linked')));
 });
 
 test('standalone finds a unique Obsidian image reference without running Obsidian', async t => {
@@ -117,6 +131,56 @@ test('settings changed after review block sending; preparation and verification 
   await profile.updateSettings({ ...settings, senderEmail: 'changed@example.com' });
   await assert.rejects(session.send('reader@kindle.com'), /settings changed/);
   assert.equal(sends, 0);
+});
+
+test('folder documents require explicit selection and sends preserve separate reviewed attachments', async t => {
+  const { root, profile, file } = await fixture(t);
+  const second = join(root, 'Second.md'); await writeFile(second, '# Second\n\nOriginal content');
+  const attachments: Buffer[] = [];
+  const mailer = new MdToKindleMailer(() => ({ verify: async () => true, sendMail: async message => { assert.equal(message.attachments!.length, 1); attachments.push(message.attachments![0].content as Buffer); return { accepted: ['reader@kindle.com'] }; }, close: () => {} }));
+  const session = new StandaloneSession(profile, mailer);
+  await session.selectFolder(root, false);
+  const state = await session.state(); assert.equal(state.files.length, 2); assert.equal(state.files.some(file => file.selected), false);
+  await assert.rejects(session.prepare(), /Choose at least one/);
+  session.selection(state.files.map(file => file.id)); await session.prepare();
+  await writeFile(second, '# Changed source after review');
+  const events: string[] = [];
+  const result = await session.send('reader@kindle.com', event => events.push(event.status));
+  assert.equal(result.submitted, 2); assert.equal(attachments.length, 2);
+  const contents = await Promise.all(attachments.map(async bytes => (await JSZip.loadAsync(bytes)).file('EPUB/content.xhtml')!.async('string')));
+  assert.ok(contents.some(html => html.includes('Original content'))); assert.ok(contents.every(html => !html.includes('Changed source')));
+  assert.deepEqual(events, ['sending', 'submitted', 'sending', 'submitted']);
+  assert.equal((await session.state()).reviewed, false);
+  await assert.rejects(session.send('reader@kindle.com'), /already been submitted/);
+  assert.equal((await readFile(file, 'utf8')).includes('Unicode'), true);
+});
+
+test('a failed batch stops once, blocks the attempted document, and can resume only unattempted documents', async t => {
+  const { root, profile } = await fixture(t);
+  await writeFile(join(root, 'Second.md'), '# Second'); await writeFile(join(root, 'Third.md'), '# Third');
+  let sends = 0; let finish!: () => void; let begin!: () => void;
+  const started = new Promise<void>(resolveStart => { begin = resolveStart; });
+  const mailer = new MdToKindleMailer(() => ({ verify: async () => true, sendMail: async () => { sends++; if (sends === 1) await new Promise<void>(resolveSend => { finish = resolveSend; begin(); }); if (sends === 2) throw new Error('synthetic connection failure'); return { accepted: ['reader@kindle.com'] }; }, close: () => {} }));
+  const session = new StandaloneSession(profile, mailer); await session.selectFolder(root, false);
+  const files = (await session.state()).files; session.selection(files.map(file => file.id)); await session.prepare();
+  const pending = session.send('reader@kindle.com');
+  await started;
+  await assert.rejects(session.send('reader@kindle.com'), /current operation/);
+  assert.throws(() => session.selection([]), /current operation/);
+  finish(); await assert.rejects(pending, /Sending stopped.*delivery may be uncertain/);
+  assert.equal(sends, 2);
+  const stopped = await session.state(); assert.deepEqual(stopped.files.map(file => file.status), ['submitted', 'failed', 'ready']);
+  assert.equal(stopped.files[1].selected, false); assert.equal(stopped.reviewed, true);
+  assert.equal((await session.send('reader@kindle.com')).submitted, 1); assert.equal(sends, 3);
+});
+
+test('document IDs cannot grant access to an unselected filesystem path and one bad conversion clears the whole review', async t => {
+  const { root, file, profile } = await fixture(t);
+  const empty = join(root, 'Empty.md'); await writeFile(empty, '');
+  const session = new StandaloneSession(profile);
+  session.selectFiles([file, empty]); assert.throws(() => session.selection(['C:\\private\\secret.md']), /document list/);
+  await assert.rejects(session.prepare(), /empty/); assert.equal((await session.state()).reviewed, false);
+  await assert.rejects(session.send('reader@kindle.com'), /review/);
 });
 
 test('saving existing settings keeps the password and new grouped Gmail passwords are normalized', async t => {

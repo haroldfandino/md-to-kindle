@@ -29,21 +29,27 @@ jobs:
       - run: npm run standalone:package:${{ matrix.platform }}
       - if: matrix.platform == 'mac'
         run: |
-          plutil -lint 'standalone/Send to Kindle.workflow/Contents/Info.plist'
-          plutil -lint 'standalone/Send to Kindle.workflow/Contents/document.wflow'
           zsh -n scripts/install-standalone-mac.sh
           zsh -n scripts/uninstall-standalone-mac.sh
+          zsh -n scripts/remove-legacy-desktop-mac.sh
+          for app in dist/standalone/mac/md-to-kindle.app dist/standalone/mac-arm64/md-to-kindle.app; do
+            plutil -lint "$app/Contents/Info.plist"
+            if plutil -extract CFBundleDocumentTypes json -o - "$app/Contents/Info.plist" >/dev/null 2>&1; then
+              echo 'Unexpected file associations in GUI app'
+              exit 1
+            fi
+          done
       - uses: actions/upload-artifact@v7
         with:
           name: md-to-kindle-${{ matrix.platform }}
           path: |
             dist/standalone/*.zip
             scripts/install-standalone.ps1
-            scripts/register-explorer.ps1
+            scripts/remove-legacy-desktop.ps1
             scripts/uninstall-standalone.ps1
             scripts/install-standalone-mac.sh
             scripts/uninstall-standalone-mac.sh
-            standalone/Send to Kindle.workflow/**
+            scripts/remove-legacy-desktop-mac.sh
             docs/STANDALONE.md
           if-no-files-found: error
           retention-days: 7

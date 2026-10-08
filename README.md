@@ -1,8 +1,8 @@
 # md-to-kindle
 
-Send a note or supported document from Obsidian to your Kindle through your own email account. You can also use the **standalone desktop app** to right-click a Markdown file in **Windows Explorer** or **macOS Finder** and send it without opening Obsidian. Notes become reflowable EPUBs with heading navigation and local images. Every send starts with a preview and requires a click on **Send**.
+Send a note or supported document from Obsidian to your Kindle through your own email account. The **standalone desktop app** lets you choose Markdown files or a folder, select the documents you want, review their EPUB previews and send each as a separate document without opening Obsidian. Notes become reflowable EPUBs with heading navigation and local images. Every send requires an explicit click.
 
-For Explorer/Finder installation, see [standalone setup](docs/STANDALONE.md). On Windows, it automatically reuses your existing protected global email profile.
+For the Windows/macOS GUI app, see [standalone setup](docs/STANDALONE.md). On Windows, it automatically reuses your existing protected global email profile. The desktop app has no context-menu integration or sign-in startup. The Obsidian plugin remains version **0.3.0**; the standalone GUI is version **0.4.0**.
 
 Desktop only: Windows, macOS, and Linux. Requires Obsidian **1.11.4+** and an SMTP account that accepts an app password or password authentication. No hosted service or subscription is required by this plugin.
 
@@ -67,7 +67,7 @@ In vault-only mode, passwords are accessed through Obsidian's Keychain only for 
 ## Send
 
 - Open a note and use **md-to-kindle: Send current note** in the command palette. The current editor text is exported, including edits not yet saved to disk.
-- Use **md-to-kindle: Choose file to send**, or right-click a supported file and choose **Send to Kindle**.
+- In Obsidian, use **md-to-kindle: Choose file to send**, or right-click a supported file in the vault's file pane and choose **Send to Kindle**.
 - Review the filename, attachment size, recipient, and warnings. A converted note has an expandable EPUB preview. Existing files are attached unchanged and are not rendered in the dialog.
 - Click **Send**. Editing the recipient in the dialog changes only that send; update the default in settings.
 

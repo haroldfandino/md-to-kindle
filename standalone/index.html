@@ -4,42 +4,56 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>md-to-kindle</title>
-  <link rel="stylesheet" href="app.css">
+  <title>md-to-kindle</title><link rel="stylesheet" href="app.css">
 </head>
 <body>
   <main>
-    <header><div><p class="eyebrow">FROM YOUR FILES TO YOUR KINDLE</p><h1>md-to-kindle</h1></div><button id="settings-toggle" class="secondary">Email settings</button></header>
-    <section id="sender" class="card">
-      <div class="file-row"><div><span class="label">SELECTED MARKDOWN</span><h2 id="filename">Choose a Markdown file</h2><p id="size" class="muted">Your file stays on this computer until you click Send.</p></div><button id="choose" class="secondary">Choose file</button></div>
-      <p id="account" class="muted"></p>
-      <label for="recipient">Kindle email</label><input id="recipient" type="email" placeholder="you@kindle.com" autocomplete="off">
-      <div id="warnings" class="warning" hidden></div>
-      <details id="preview-details" hidden><summary>Read the EPUB preview</summary><article id="preview"></article></details>
-      <p class="help">Your sending email must be on Amazon’s Approved Personal Document E-mail List.</p>
-      <div class="actions"><button id="refresh" class="secondary">Refresh preview</button><button id="send" disabled>Send to Kindle</button></div>
+    <header class="app-header">
+      <div class="brand"><span class="brand-icon" aria-hidden="true">m<span>k</span></span><div><h1>md-to-kindle</h1><p>Your notes. Your next read.</p></div></div>
+      <button id="settings-toggle" class="secondary">Email settings</button>
+    </header>
+    <div class="intro"><h2>Make room for a little reading.</h2><p>Choose your Markdown documents, review them, and send them to your Kindle.</p></div>
+    <div class="workspace">
+      <section class="library" aria-label="Document selection">
+        <div class="section-heading"><span class="step">01</span><h3>Your documents</h3></div>
+        <div class="pickers"><button id="choose" class="secondary">Choose files</button><button id="choose-folder" class="secondary">Choose folder</button></div>
+        <label class="checkbox-label"><input id="recursive" type="checkbox" checked> Include subfolders when choosing a folder</label>
+        <div class="library-heading"><div><strong id="source">No files chosen</strong><span id="file-count" class="muted">Markdown files · .md and .markdown</span></div><button id="select-all" class="text-button" disabled>Select all</button></div>
+        <div id="folder-warnings" class="warning" hidden></div>
+        <div id="files" class="files"><div class="list-empty">Your documents will appear here.<br>Choose a file or browse a folder to begin.</div></div>
+        <div class="selection-footer"><span id="selection-count">0 documents selected</span><button id="refresh" class="secondary" disabled>Review selected</button></div>
+      </section>
+      <section class="reading" aria-label="Document review">
+        <div class="section-heading"><span class="step">02</span><h3>Before you send</h3><span class="format-tag">EPUB</span></div>
+        <div id="preview-empty" class="preview-empty"><div class="book-icon" aria-hidden="true"><span></span><span></span><span></span></div><h3>A new home for your notes.</h3><p>Select the documents you want to read<br>and click <strong>Review selected</strong>.</p></div>
+        <div id="preview-details" hidden><div class="preview-title"><h2 id="filename"></h2><span id="size" class="muted"></span></div><div id="warnings" class="warning" hidden></div><article id="preview" aria-label="EPUB content"></article></div>
+      </section>
+    </div>
+    <section class="delivery" aria-label="Kindle destination">
+      <div class="delivery-heading"><span class="step">03</span><div><h3>Send to your Kindle</h3><p id="account" class="muted">Loading your saved email account…</p></div></div>
+      <div class="destination"><label for="recipient">Kindle email<input id="recipient" type="email" placeholder="you@kindle.com" autocomplete="off"></label><button id="send" disabled>Send to Kindle</button></div>
     </section>
-    <section id="settings" class="card" hidden>
-      <h2>Your email account</h2><p class="muted">On Windows, these settings are shared with md-to-kindle in Obsidian. The app password is protected by the operating system.</p>
-      <form id="settings-form">
-        <div class="fields">
-          <label>Kindle email<input name="kindleEmail" type="email" required></label>
-          <label>Sender email<input name="senderEmail" type="email" required></label>
-          <label>SMTP host<input name="smtpHost" placeholder="smtp.gmail.com" required></label>
-          <label>SMTP username<input name="smtpUsername" type="text" required></label>
-          <label>SMTP port<input name="smtpPort" type="number" min="1" max="65535" value="587" required></label>
-          <label>TLS mode<select name="tlsMode"><option value="starttls">Required STARTTLS</option><option value="tls">Implicit TLS</option></select></label>
-          <label>Attachment limit (MB)<input name="maxAttachmentMB" type="number" min="1" max="50" value="20" required></label>
-          <label>App password<input name="password" type="password" placeholder="Leave blank to keep the saved password" autocomplete="new-password"></label>
-        </div>
-        <p class="help">For Gmail: use smtp.gmail.com, port 587, and a Google app password created with 2-Step Verification. Paste it without spaces.</p>
-        <p class="help">In Amazon: Manage Your Content and Devices → Preferences → Personal Document Settings → Approved Personal Document E-mail List. Add your exact Sender email.</p>
-        <div class="actions"><button id="test" type="button" class="secondary">Test saved connection</button><button id="save" type="submit">Save settings</button></div>
-      </form>
-    </section>
-    <div id="status" role="status" aria-live="polite"></div>
-    <footer>Local conversion · Your own email account · Preview before sending</footer>
+    <p class="amazon-note">Add your sending address to Amazon’s <strong>Approved Personal Document E-mail List</strong> before sending. Each selected document is sent in a separate email.</p>
+    <div class="status-row"><div id="status" role="status" aria-live="polite">Choose files or a folder to get started.</div><progress id="progress" value="0" max="1" hidden aria-label="Sending progress"></progress></div>
+    <footer>Converted on your computer · Sent through your email account · Nothing sends until you click</footer>
   </main>
+  <section id="settings" class="modal" role="dialog" aria-modal="true" aria-labelledby="settings-title" hidden>
+    <div class="settings-card"><div class="settings-heading"><div><span class="eyebrow">YOUR ACCOUNT</span><h2 id="settings-title">Email settings</h2></div><button id="settings-close" class="secondary">Close</button></div>
+      <p class="muted">Your saved Windows email profile is also used by md-to-kindle in Obsidian. Leave the password empty to keep the saved one.</p>
+      <form id="settings-form"><div class="fields">
+        <label>Kindle email<input name="kindleEmail" type="email" required></label>
+        <label>Sender email<input name="senderEmail" type="email" required></label>
+        <label>SMTP host<input name="smtpHost" placeholder="smtp.gmail.com" required></label>
+        <label>SMTP username<input name="smtpUsername" type="text" required></label>
+        <label>SMTP port<input name="smtpPort" type="number" min="1" max="65535" value="587" required></label>
+        <label>TLS mode<select name="tlsMode"><option value="starttls">Required STARTTLS</option><option value="tls">Implicit TLS</option></select></label>
+        <label>Attachment limit (MB)<input name="maxAttachmentMB" type="number" min="1" max="50" value="20" required></label>
+        <label>App password<input name="password" type="password" placeholder="Keep saved password" autocomplete="new-password"></label>
+      </div><p class="help">Gmail: smtp.gmail.com · port 587 · Required STARTTLS · a Google app password created with 2-Step Verification.</p>
+      <div class="approval"><strong>Approve your sender in Amazon</strong><p>Manage Your Content and Devices → Preferences → Personal Document Settings → Approved Personal Document E-mail List. Add the exact <strong>Sender email</strong> above. A connection test does not check Amazon approval.</p></div>
+      <div id="settings-status" role="status" aria-live="polite"></div><div class="actions"><button id="test" type="button" class="secondary">Test saved connection</button><button id="save" type="submit">Save settings</button></div></form>
+    </div>
+  </section>
   <script src="renderer.js"></script>
 </body>
 </html>

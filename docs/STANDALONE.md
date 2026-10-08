@@ -1,62 +1,67 @@
-# Send Markdown from Explorer or Finder
+# Standalone Markdown sender
 
-The standalone md-to-kindle app converts a saved `.md` or `.markdown` file to EPUB and opens a review window. It runs independently of Obsidian. No file is emailed until you click **Send to Kindle** in that window. Each send contains one attachment.
+**md-to-kindle 0.4.0** is an app you open when you want to read your Markdown documents on Kindle. Choose files or browse a folder, select the documents you want, review their EPUB previews and click Send. Each document is sent in a separate email with one attachment. Obsidian does not need to be running.
 
-## Windows Explorer
+The standalone app does not install Explorer/Finder actions, file associations, background services or sign-in startup. Updating removes older desktop context-menu actions. The Obsidian plugin remains version 0.3.0 and its existing features/settings are preserved.
 
-1. Extract the Windows standalone app ZIP. It contains `md-to-kindle.exe` and its supporting files; keep the entire folder together.
-2. Obtain `scripts/install-standalone.ps1` from the source checkout/build artifact and run:
+## Install on Windows
+
+Extract `md-to-kindle-0.4.0-win-x64.zip` and keep all of its app files together. Obtain the installer and cleanup script from the same build artifact or source checkout, then run in a normal Windows PowerShell session:
 
 ```powershell
 powershell -File .\scripts\install-standalone.ps1 -AppFolder 'C:\path\to\extracted\app'
 ```
 
-Developers who packaged the app locally can omit `-AppFolder`; the installer uses `dist/standalone/win-unpacked`.
+Developers can omit `-AppFolder` after packaging; the default is `dist/standalone/win-unpacked`. The app is installed in `%LOCALAPPDATA%\Programs\md-to-kindle`, with Start-menu and desktop shortcuts. Keep `remove-legacy-desktop.ps1` beside the installer. Close the app before updating.
 
-The app is copied into `%LOCALAPPDATA%\Programs\md-to-kindle`. The installer adds a per-user Explorer verb for `.md` and `.markdown`, plus a Start-menu shortcut. Your default Markdown editor is preserved. On Windows 11, use **Right-click → Show more options → Send to Kindle**. On Windows 10 the entry appears in the regular context menu. One selected file is accepted at a time.
+Open **md-to-kindle** from Start or the desktop. The app reuses your protected global email profile on the same Windows account, including the app password. If that profile does not exist, enter your email settings in the app. No private addresses or credentials are preset in public builds.
 
-Keep `register-explorer.ps1` beside `install-standalone.ps1`; the installer uses it to register the menu. The registration includes a Markdown-filtered file verb plus extension and active-handler keys, and notifies Explorer that associations changed. It does not replace the existing editor's Open command.
-
-If the entry is missing after an older installation, repair it without closing the sender or reinstalling the app:
+To remove remaining older hooks separately:
 
 ```powershell
-powershell -File .\scripts\register-explorer.ps1
+powershell -File .\scripts\remove-legacy-desktop.ps1
 ```
 
-Close any already-open context menu and right-click again after repair. Select a single `.md` or `.markdown` file. No Explorer process restart is performed.
+If you also want to stop the optional Obsidian all-vault helper and remove its sign-in startup, add `-RemoveHelperStartup`. This preserves installed vault plugins and email settings, but stops automatic enrollment of new vaults. The GUI installer does not disable that optional Obsidian helper by default.
 
-On the same Windows account, the standalone app automatically reuses the protected global email profile configured through Obsidian. Neither Obsidian nor the all-vault background helper has to be running to send a file. If no global profile exists, the standalone app offers its own email setup.
+`uninstall-standalone.ps1` removes app shortcuts and legacy hooks while preserving the app folder and protected email profile. Delete the app folder yourself after closing it if you want to remove its files entirely.
 
-To remove the Explorer menu and shortcut, run `scripts/uninstall-standalone.ps1`. App files and the shared profile are preserved, so uninstalling the context menu does not break Obsidian or its helper. Close the standalone app before installing an update.
+## Install on macOS
 
-## macOS Finder
-
-Use the Mac app ZIP for your architecture: `arm64` for Apple Silicon or `x64` for Intel. Extract it to obtain `md-to-kindle.app`, then run the provided installer from this source checkout or the matching build artifact:
+Use `md-to-kindle-0.4.0-mac-arm64.zip` for Apple Silicon or `md-to-kindle-0.4.0-mac-x64.zip` for Intel. Extract the app and run the installer from the same artifact/source checkout:
 
 ```sh
 zsh scripts/install-standalone-mac.sh '/path/to/md-to-kindle.app'
 ```
 
-It installs the app into `~/Applications` and **Send to Kindle.workflow** into `~/Library/Services`. Right-click a Markdown file and choose **Quick Actions → Send to Kindle** (or the Finder **Services** menu). The workflow supports one selected Markdown file and opens the app with that file even if the app is already running. It does not change your default editor.
+Open **md-to-kindle** from `~/Applications` or Spotlight. The installer removes the old Send to Kindle Quick Action, including the disabled backup, and unregisters old app file associations before updating. Keep `remove-legacy-desktop-mac.sh` beside the installer. Neither version starts at sign-in.
 
-Open the app once on that Mac to configure its email profile. macOS settings are stored in `~/Library/Application Support/md-to-kindle/profile.json`; the app password is encrypted using Electron's OS-backed safeStorage in the main process, which uses macOS Keychain protection. Windows DPAPI profiles cannot be copied to a Mac. The Windows all-vault helper is separate and remains Windows-only.
+Configure the email account on that Mac. The password is protected by macOS Keychain through Electron safeStorage. Windows profiles cannot be copied to a Mac. Current packages are unsigned/not notarized, so macOS may require you to approve the app before opening it. The installer does not change system security settings.
 
-Current builds are unsigned and not notarized. macOS may require you to approve the app before opening it, and Keychain may request access on first use or after an update. The installer does not change Gatekeeper, remove quarantine attributes, or alter system security settings. A signed/notarized release requires the publisher's Apple Developer credentials.
+To remove legacy actions separately, run `zsh scripts/remove-legacy-desktop-mac.sh`. This preserves the app and protected profile.
 
-To disable the Finder action, run `zsh scripts/uninstall-standalone-mac.sh`. It renames only that workflow to a disabled bundle, preserving the app and encrypted profile.
+## Choose, review and send
 
-## Email setup and sending
+1. Click **Choose files** for one or more `.md`/`.markdown` files, or **Choose folder** to list a folder's Markdown documents. Enable **Include subfolders** before choosing the folder if needed. Hidden folders, dependency folders and symbolic links are skipped. Browsing a folder does not send any files.
+2. Use the checkboxes to choose documents. Folders with multiple documents start with none selected. You can browse up to 500 documents and select up to 200 at a time.
+3. Click **Review selected**. The app converts only those documents and shows attachment sizes, conversion warnings and readable EPUB previews. Click a document name to switch previews.
+4. Check the **Kindle email** and sender, then click **Send to Kindle** or **Send N documents**. Each document is submitted separately; progress and outcomes appear beside its filename.
 
-- Use your provider's SMTP host, username and app password. For Gmail: `smtp.gmail.com`, port `587`, **Required STARTTLS**, and a Google app password created with 2-Step Verification. Existing saved passwords remain in place when the password field is left empty.
-- **Approve the sender with Amazon before sending:** Manage Your Content and Devices → Preferences → Personal Document Settings → Approved Personal Document E-mail List → Add a new approved e-mail address. Add the exact connected **sender**, not the Kindle recipient. A successful connection test does not check Amazon approval.
-- Review the sender, editable Kindle recipient, attachment size, warnings and EPUB preview. Click **Send to Kindle** when ready. Success means the email provider accepted submission; Amazon may request verification or take time to process it.
-- The file on disk is read, so unsaved editor changes are not included. The reviewed in-memory EPUB is sent unchanged, even if the source file changes afterward. If global email settings change after review, refresh the preview before sending.
+Success means **Submitted to your email provider**, not confirmed Kindle delivery. Amazon may ask you to verify the email. A failure stops the batch; submitted files are not sent again, the attempted file is blocked, and unattempted documents remain ready. Check your mailbox before choosing a failed file again, since submission may be uncertain. There is no automatic retry.
 
-Images inside the file's folder are supported. For notes inside a default Obsidian vault, the sender also resolves vault-root image paths and unique image filenames in that vault. Ambiguous, missing, remote, unsafe or unsupported images are omitted with warnings. Parent traversal paths (`../`) are omitted. Other notes are not followed or exported; dynamic Obsidian plugins are not executed. Non-UTF-8, empty, unsupported or oversized files are rejected before sending.
+The app reads saved file contents, so unsaved editor changes are not included. The reviewed EPUB bytes are kept in memory and sent unchanged even if the source changes afterward. Changing the selection or saved email settings requires a new review. The default attachment limit is 20 MB per document, configurable up to 50 MB; provider limits may be lower. The in-memory review budget is 100 MB for the selection.
 
-The renderer is sandboxed with Node integration disabled. Notes cannot execute scripts or access email credentials through the preview. Passwords are unlocked only in the main process for explicit sends/tests. Previewing a file and opening the app do not send email. No telemetry or automatic retry is used.
+Local PNG/JPEG/GIF images are supported, including vault-root paths and unique image filenames inside a default Obsidian vault. Missing, remote, unsafe, ambiguous and unsupported images are omitted with warnings. Linked notes and dynamic plugins are not executed or followed. Files must be UTF-8 Markdown. Folder browsing is bounded and does not follow linked directories.
 
-## Build and validation
+## Connect your email and approve it in Amazon
+
+Use **Email settings** to configure the Kindle recipient, sender, SMTP host, username, port, TLS mode and app password. For Gmail, use `smtp.gmail.com`, port `587`, Required STARTTLS and a Google app password created with 2-Step Verification. Spaces in Google's grouped app password are removed automatically. Leave the password blank to retain the saved one. **Test saved connection** authenticates without sending email.
+
+**Required:** add the exact connected **sender email** to Amazon's **Approved Personal Document E-mail List**. Open Manage Your Content and Devices → Preferences → Personal Document Settings → Approved Personal Document E-mail List → Add a new approved e-mail address. Approve the sender, not the Kindle recipient. A successful SMTP test does not check Amazon approval.
+
+Conversion is local. The chosen documents and supported embedded images travel through your email provider to Amazon only when you click Send. The renderer cannot access passwords, execute note scripts or open note links. Password protection remains in the main process. There is no telemetry, hosted backend, whole-folder upload, automatic sending or background watcher in this app.
+
+## Build
 
 ```sh
 npm ci
@@ -66,6 +71,6 @@ npm run release
 npm run standalone:package:win
 ```
 
-Use `npm run standalone:package:mac` on macOS to build Intel and Apple Silicon app ZIPs. `npm run standalone:dev` launches the development app. A manual **Build standalone desktop apps** workflow builds Windows and macOS packages in GitHub Actions and validates the Finder workflow property lists and shell syntax. It uploads build artifacts without publishing a release or installing anything on a user's computer.
+On macOS, use `npm run standalone:package:mac` to build both architectures. `npm run standalone:dev` opens the development GUI. The manual **Build standalone desktop apps** GitHub Actions workflow builds both platforms and uploads artifacts without publishing a release.
 
-The same EPUB/mail modules serve Obsidian and the standalone app. Standalone tests cover Unicode filenames, literal shell-looking names/content, file/encoding limits, image boundaries, vault image lookup, settings changes after preview, exact attachment bytes, protected profile reuse and duplicate submissions. Windows runtime and Explorer checks are performed locally; Finder behavior needs a Mac for a full interactive smoke test.
+`standalone/version.json` controls the GUI version independently of the unchanged Obsidian manifest. Tests cover folder discovery, explicit selection, previews, per-document attachment construction, reviewed-byte preservation, partial failure, duplicate-send prevention, protected profile reuse and safe legacy cleanup.

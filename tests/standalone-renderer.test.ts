@@ -3,32 +3,41 @@ import { test } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
 
-test('standalone UI displays a reviewed sender and prevents duplicate submission without exposing a password', async () => {
+test('GUI chooses a folder, selects and reviews documents, displays progress and prevents duplicate sends', async () => {
   const browser = new JSDOM(await readFile('standalone/index.html', 'utf8'), { runScripts: 'outside-only', url: 'file:///application/index.html' });
   const { window } = browser;
   const settings = { kindleEmail: 'reader@kindle.com', senderEmail: 'sender@example.com', smtpHost: 'smtp.example.com', smtpUsername: 'sender@example.com', smtpPort: 587, tlsMode: 'starttls', maxAttachmentMB: 20 };
-  let sent = 0;
-  let finish!: () => void;
+  const current = { configured: true, settings, source: '', files: [] as { id: string; label: string; status: string; selected: boolean; size?: number; warnings: string[] }[], warnings: [], reviewed: false };
+  let sent = 0; let prepared = 0; let finish!: () => void; let progress!: (event: unknown) => void;
+  const preview = { id: 'one', filename: 'note.epub', size: 500, settings, warnings: ['Missing image omitted.'], previewHtml: '<h1>Reviewed note</h1><a href="https://example.com">Link</a>' };
   Object.assign(window, { kindle: {
-    state: async () => ({ ok: true, value: { configured: true, filename: 'note.md', settings } }),
-    prepare: async () => ({ ok: true, value: { filename: 'note.epub', size: 500, settings, warnings: ['Missing image omitted.'], previewHtml: '<h1>Reviewed note</h1><a href="https://example.com">Link</a>' } }),
-    send: async () => { sent++; await new Promise<void>(resolve => { finish = resolve; }); return { ok: true }; },
+    state: async () => ({ ok: true, value: structuredClone(current) }),
+    chooseFolder: async (recursive: boolean) => { assert.equal(recursive, true); current.source = 'Notes'; current.files = [{ id: 'one', label: '<script>note.md</script>', status: 'selected', selected: false, warnings: [] }]; return { ok: true, value: structuredClone(current) }; },
+    chooseFiles: async () => ({ ok: true, value: { ...structuredClone(current), canceled: true } }),
+    selection: async (ids: string[]) => { current.files[0].selected = ids.includes('one'); return { ok: true, value: structuredClone(current) }; },
+    prepare: async () => { prepared++; current.reviewed = true; Object.assign(current.files[0], { status: 'ready', size: 500, warnings: preview.warnings }); return { ok: true, value: preview }; },
+    preview: async () => ({ ok: true, value: preview }),
+    onProgress: (callback: typeof progress) => { progress = callback; },
+    send: async () => { sent++; progress({ id: 'one', status: 'sending', completed: 0, total: 1 }); await new Promise<void>(resolve => { finish = resolve; }); current.reviewed = false; Object.assign(current.files[0], { status: 'submitted', selected: false }); return { ok: true, value: { submitted: 1 } }; },
   } });
-  window.eval(await readFile('standalone/renderer.js', 'utf8'));
-  await new Promise(resolve => setTimeout(resolve, 0));
-  const document = window.document;
-  assert.equal(document.getElementById('filename')!.textContent, 'note.epub');
+  const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+  window.eval(await readFile('standalone/renderer.js', 'utf8')); await tick();
+  const document = window.document; const click = (id: string) => (document.getElementById(id) as HTMLButtonElement).click();
+  assert.equal(document.getElementById('settings')!.hidden, true);
+  assert.equal((document.getElementById('send') as HTMLButtonElement).disabled, true);
+  click('choose-folder'); await tick(); assert.equal(prepared, 0); assert.match(document.getElementById('source')!.textContent!, /Notes/);
+  assert.equal(document.querySelector('#files script'), null);
+  click('select-all'); await tick(); click('refresh'); await tick();
+  assert.equal(prepared, 1); assert.equal(document.getElementById('filename')!.textContent, 'note.epub');
   assert.match(document.getElementById('account')!.textContent!, /sender@example.com/);
   assert.match(document.getElementById('warnings')!.textContent!, /Missing image/);
   assert.equal(document.querySelector('#preview a[href]'), null);
   assert.equal((document.querySelector('input[name="password"]') as HTMLInputElement).value, '');
-  const button = document.getElementById('send') as HTMLButtonElement;
-  button.click(); button.click();
-  assert.equal(sent, 1);
-  assert.equal(button.disabled, true);
-  finish();
-  await new Promise(resolve => setTimeout(resolve, 0));
-  assert.match(document.getElementById('status')!.textContent!, /Submitted to your email provider/);
-  assert.equal(button.disabled, true);
+  click('choose'); await tick(); assert.equal(document.getElementById('filename')!.textContent, 'note.epub');
+  assert.equal((document.getElementById('send') as HTMLButtonElement).disabled, false);
+  click('send'); click('send'); assert.equal(sent, 1); assert.equal((document.getElementById('send') as HTMLButtonElement).disabled, true);
+  assert.equal(document.querySelector('#files .badge')!.textContent, 'Sending');
+  finish(); await tick(); assert.match(document.getElementById('status')!.textContent!, /Submitted to your email provider/);
+  assert.equal((document.getElementById('send') as HTMLButtonElement).disabled, true);
   browser.window.close();
 });
