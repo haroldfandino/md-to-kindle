@@ -44,3 +44,9 @@ Production dependencies pass `npm audit --omit=dev`. The current Electron packag
 On **2026-10-07**, all **52 local tests** and strict typechecking passed. The standalone Windows app was packaged, installed and launched. Its Explorer commands for `.md` and `.markdown` were checked in the per-user registry, with existing default editor associations preserved. The actual app reused the saved global account and converted a user-selected Markdown file into a ready-to-send EPUB preview without submitting email.
 
 The [Windows and macOS build run](https://github.com/haroldfandino/md-to-kindle/actions/runs/37716726158) completed successfully. It produced Windows x64 plus macOS Intel/Apple Silicon app ZIPs and passed native macOS plist/shell syntax checks. Desktop packages are unsigned and macOS packages are not notarized. Interactive Finder/Keychain behavior on a user's Mac remains unverified.
+
+## Explorer registration repair
+
+On **2026-10-07**, the Explorer registration was expanded to include a Markdown-filtered generic file verb and the current editor's ProgID keys, alongside extension registrations. The registrar now calls `SHChangeNotify(SHCNE_ASSOCCHANGED)` so Explorer refreshes its association cache. The default editor and its existing Open command were checked before and after repair and remained unchanged.
+
+Windows Shell's actual verb enumeration confirmed exactly one **Send to Kindle** entry on the affected iCloud Markdown file and the synthetic `.md` file. It confirmed no such entry on a `.txt` file. A registry-isolated regression test checks filtered registration, quoted filename forwarding and idempotency. All **53 tests** and strict typechecking passed. The repair can run while the standalone app is open, without reinstalling it or restarting Explorer.

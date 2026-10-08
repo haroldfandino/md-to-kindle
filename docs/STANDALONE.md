@@ -15,6 +15,16 @@ Developers who packaged the app locally can omit `-AppFolder`; the installer use
 
 The app is copied into `%LOCALAPPDATA%\Programs\md-to-kindle`. The installer adds a per-user Explorer verb for `.md` and `.markdown`, plus a Start-menu shortcut. Your default Markdown editor is preserved. On Windows 11, use **Right-click → Show more options → Send to Kindle**. On Windows 10 the entry appears in the regular context menu. One selected file is accepted at a time.
 
+Keep `register-explorer.ps1` beside `install-standalone.ps1`; the installer uses it to register the menu. The registration includes a Markdown-filtered file verb plus extension and active-handler keys, and notifies Explorer that associations changed. It does not replace the existing editor's Open command.
+
+If the entry is missing after an older installation, repair it without closing the sender or reinstalling the app:
+
+```powershell
+powershell -File .\scripts\register-explorer.ps1
+```
+
+Close any already-open context menu and right-click again after repair. Select a single `.md` or `.markdown` file. No Explorer process restart is performed.
+
 On the same Windows account, the standalone app automatically reuses the protected global email profile configured through Obsidian. Neither Obsidian nor the all-vault background helper has to be running to send a file. If no global profile exists, the standalone app offers its own email setup.
 
 To remove the Explorer menu and shortcut, run `scripts/uninstall-standalone.ps1`. App files and the shared profile are preserved, so uninstalling the context menu does not break Obsidian or its helper. Close the standalone app before installing an update.

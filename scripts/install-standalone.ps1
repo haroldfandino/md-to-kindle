@@ -9,14 +9,7 @@ $taskDestination = Join-Path $env:LOCALAPPDATA 'Programs\md-to-kindle'
 New-Item -ItemType Directory -Path $taskDestination -Force | Out-Null
 if ($taskSource -ne $taskDestination) { Get-ChildItem -LiteralPath $taskSource -Force | Copy-Item -Destination $taskDestination -Recurse -Force }
 $taskExe = Join-Path $taskDestination 'md-to-kindle.exe'
-foreach ($taskExtension in @('.md','.markdown')) {
-    $taskVerb = "HKCU:\Software\Classes\SystemFileAssociations\$taskExtension\shell\md-to-kindle"
-    New-Item -Path "$taskVerb\command" -Force | Out-Null
-    Set-Item -LiteralPath $taskVerb -Value 'Send to Kindle'
-    New-ItemProperty -LiteralPath $taskVerb -Name Icon -Value ('"' + $taskExe + '"') -PropertyType String -Force | Out-Null
-    New-ItemProperty -LiteralPath $taskVerb -Name MultiSelectModel -Value 'Single' -PropertyType String -Force | Out-Null
-    Set-Item -LiteralPath "$taskVerb\command" -Value ('"' + $taskExe + '" --file "%1"')
-}
+& (Join-Path $PSScriptRoot 'register-explorer.ps1') -AppPath $taskExe
 $taskStartMenu = Join-Path ([Environment]::GetFolderPath('Programs')) 'md-to-kindle.lnk'
 $taskShell = New-Object -ComObject WScript.Shell
 $taskShortcut = $taskShell.CreateShortcut($taskStartMenu)

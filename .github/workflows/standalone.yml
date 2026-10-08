@@ -39,6 +39,7 @@ jobs:
           path: |
             dist/standalone/*.zip
             scripts/install-standalone.ps1
+            scripts/register-explorer.ps1
             scripts/uninstall-standalone.ps1
             scripts/install-standalone-mac.sh
             scripts/uninstall-standalone-mac.sh
