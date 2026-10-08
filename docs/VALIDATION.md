@@ -41,4 +41,6 @@ The EPUB exporter now uses a pure HTML5 parser and XML serializer, with no brows
 
 Production dependencies pass `npm audit --omit=dev`. The current Electron packaging toolchain has eight moderate development-only advisory entries through its download/logger dependencies; these are not runtime dependencies of the app. The latest supported builder is used rather than downgrading to an older toolchain with higher-severity advisories.
 
-Desktop packages are unsigned and macOS packages are not notarized. Windows Explorer integration and app startup are checked locally; macOS package assembly, plist syntax and shell syntax are checked on the GitHub macOS runner. Finder/Keychain interaction on a user's Mac requires a separate interactive smoke test.
+On **2026-10-07**, all **52 local tests** and strict typechecking passed. The standalone Windows app was packaged, installed and launched. Its Explorer commands for `.md` and `.markdown` were checked in the per-user registry, with existing default editor associations preserved. The actual app reused the saved global account and converted a user-selected Markdown file into a ready-to-send EPUB preview without submitting email.
+
+The [Windows and macOS build run](https://github.com/haroldfandino/md-to-kindle/actions/runs/37716726158) completed successfully. It produced Windows x64 plus macOS Intel/Apple Silicon app ZIPs and passed native macOS plist/shell syntax checks. Desktop packages are unsigned and macOS packages are not notarized. Interactive Finder/Keychain behavior on a user's Mac remains unverified.
