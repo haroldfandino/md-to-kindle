@@ -23,6 +23,7 @@
     "profile:test": "tsx scripts/test-global-profile.ts",
     "standalone:build": "tsc --noEmit && node scripts/build-standalone.mjs",
     "standalone:dev": "npm run standalone:build && electron standalone-dist",
+    "standalone:layout": "npm run standalone:build && electron scripts/check-standalone-layout.cjs --disable-gpu",
     "standalone:package:win": "npm run standalone:build && electron-builder --config standalone/electron-builder.json --win --x64 --publish never",
     "standalone:package:mac": "npm run standalone:build && electron-builder --config standalone/electron-builder.json --mac --x64 --arm64 --publish never"
   },

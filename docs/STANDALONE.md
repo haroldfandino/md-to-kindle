@@ -1,12 +1,12 @@
 # Standalone Markdown sender
 
-**md-to-kindle 0.4.0** is an app you open when you want to read your Markdown documents on Kindle. Choose files or browse a folder, select the documents you want, review their EPUB previews and click Send. Each document is sent in a separate email with one attachment. Obsidian does not need to be running.
+**md-to-kindle 0.4.1** is an app you open when you want to read your Markdown documents on Kindle. Choose files or browse a folder, select the documents you want, review their EPUB previews and click Send. Each document is sent in a separate email with one attachment. Obsidian does not need to be running.
 
 The standalone app does not install Explorer/Finder actions, file associations, background services or sign-in startup. Updating removes older desktop context-menu actions. The Obsidian plugin remains version 0.3.0 and its existing features/settings are preserved.
 
 ## Install on Windows
 
-Extract `md-to-kindle-0.4.0-win-x64.zip` and keep all of its app files together. Obtain the installer and cleanup script from the same build artifact or source checkout, then run in a normal Windows PowerShell session:
+Extract `md-to-kindle-0.4.1-win-x64.zip` and keep all of its app files together. Obtain the installer and cleanup script from the same build artifact or source checkout, then run in a normal Windows PowerShell session:
 
 ```powershell
 powershell -File .\scripts\install-standalone.ps1 -AppFolder 'C:\path\to\extracted\app'
@@ -28,7 +28,7 @@ If you also want to stop the optional Obsidian all-vault helper and remove its s
 
 ## Install on macOS
 
-Use `md-to-kindle-0.4.0-mac-arm64.zip` for Apple Silicon or `md-to-kindle-0.4.0-mac-x64.zip` for Intel. Extract the app and run the installer from the same artifact/source checkout:
+Use `md-to-kindle-0.4.1-mac-arm64.zip` for Apple Silicon or `md-to-kindle-0.4.1-mac-x64.zip` for Intel. Extract the app and run the installer from the same artifact/source checkout:
 
 ```sh
 zsh scripts/install-standalone-mac.sh '/path/to/md-to-kindle.app'
@@ -44,7 +44,7 @@ To remove legacy actions separately, run `zsh scripts/remove-legacy-desktop-mac.
 
 1. Click **Choose files** for one or more `.md`/`.markdown` files, or **Choose folder** to list a folder's Markdown documents. Enable **Include subfolders** before choosing the folder if needed. Hidden folders, dependency folders and symbolic links are skipped. Browsing a folder does not send any files.
 2. Use the checkboxes to choose documents. Folders with multiple documents start with none selected. You can browse up to 500 documents and select up to 200 at a time.
-3. Click **Review selected**. The app converts only those documents and shows attachment sizes, conversion warnings and readable EPUB previews. Click a document name to switch previews.
+3. Click **Review selected**. The app converts only those documents and shows attachment sizes, conversion warnings and readable EPUB previews. Click anywhere in a prepared document row, except its checkbox, to switch previews. Scroll the preview pane to read the entire document; it also supports keyboard scrolling. The Review selected button stays in the fixed action row when the list scrolls.
 4. Check the **Kindle email** and sender, then click **Send to Kindle** or **Send N documents**. Each document is submitted separately; progress and outcomes appear beside its filename.
 
 Success means **Submitted to your email provider**, not confirmed Kindle delivery. Amazon may ask you to verify the email. A failure stops the batch; submitted files are not sent again, the attempted file is blocked, and unattempted documents remain ready. Check your mailbox before choosing a failed file again, since submission may be uncertain. There is no automatic retry.
@@ -67,6 +67,7 @@ Conversion is local. The chosen documents and supported embedded images travel t
 npm ci
 npm run typecheck
 npm test
+npm run standalone:layout
 npm run release
 npm run standalone:package:win
 ```

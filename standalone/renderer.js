@@ -34,19 +34,21 @@ function render() {
   byId('select-all').textContent = available.length && available.every(file => file.selected) ? 'Clear selection' : current.files.filter(eligible).length > 200 ? 'Select first 200' : 'Select all';
   byId('send').textContent = selected().length > 1 ? `Send ${selected().length} documents` : 'Send to Kindle';
   byId('account').textContent = current.configured ? `Sending from ${current.settings.senderEmail}` : 'Add your email account in Email settings.';
-  const files = byId('files'); files.replaceChildren();
+  const files = byId('files'); const listScroll = files.scrollTop; files.replaceChildren();
   if (!current.files.length) { const empty = document.createElement('div'); empty.className = 'list-empty'; empty.textContent = current.source ? 'No Markdown files found in this folder.' : 'Your documents will appear here. Choose a file or browse a folder to begin.'; files.appendChild(empty); }
   for (const file of current.files) {
-    const row = document.createElement('div'); row.className = 'file-item'; if (file.id === previewId) row.classList.add('active');
+    const row = document.createElement('div'); row.className = 'file-item'; row.dataset.id = file.id; if (file.id === previewId) row.classList.add('active'); if (file.size) row.classList.add('reviewable');
     const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = file.selected; checkbox.dataset.id = file.id; checkbox.setAttribute('aria-label', `Select ${file.label}`);
-    const content = document.createElement('div'); content.className = 'file-content';
-    const name = document.createElement('button'); name.className = 'file-name'; name.dataset.id = file.id; name.textContent = file.label; name.title = file.label;
+    const button = document.createElement('button'); button.className = 'file-preview'; button.dataset.id = file.id; button.setAttribute('aria-label', `Preview ${file.label}`); button.setAttribute('aria-pressed', String(file.id === previewId));
+    const content = document.createElement('span'); content.className = 'file-content';
+    const name = document.createElement('span'); name.className = 'file-name'; name.textContent = file.label; name.title = file.label;
     const detail = document.createElement('span'); detail.className = 'file-detail';
     detail.textContent = file.error || [file.size ? `${(file.size / 1000000).toFixed(2)} MB` : 'Markdown', file.warnings.length ? `${file.warnings.length} conversion ${file.warnings.length === 1 ? 'warning' : 'warnings'}` : ''].filter(Boolean).join(' · ');
     content.append(name, detail);
     const badge = document.createElement('span'); badge.className = `badge ${file.status}`; badge.textContent = { selected: 'To review', ready: 'Ready', sending: 'Sending', submitted: 'Submitted', failed: 'Stopped' }[file.status];
-    row.append(checkbox, content, badge); files.appendChild(row);
+    button.append(content, badge); row.append(checkbox, button); files.appendChild(row);
   }
+  files.scrollTop = listScroll;
   const warnings = byId('folder-warnings'); warnings.replaceChildren(); warnings.hidden = !current.warnings.length;
   for (const warning of current.warnings) { const line = document.createElement('p'); line.textContent = warning; warnings.appendChild(line); }
   setBusy(busy);
@@ -60,6 +62,7 @@ function showPreview(preview) {
   byId('preview').innerHTML = preview.previewHtml;
   for (const link of byId('preview').querySelectorAll('a')) link.removeAttribute('href');
   byId('preview-empty').hidden = true; byId('preview-details').hidden = false;
+  byId('preview-details').scrollTop = 0;
   render();
 }
 async function refreshState() { current = await request(api.state()); render(); }
@@ -91,15 +94,17 @@ byId('files').addEventListener('change', event => {
 });
 byId('select-all').addEventListener('click', () => { const available = current.files.filter(eligible).slice(0, 200); void changeSelection(available.every(file => file.selected) ? [] : available.map(file => file.id)); });
 byId('files').addEventListener('click', async event => {
-  const button = event.target.closest('button[data-id]'); if (!button || busy) return;
+  if (busy || event.target.closest('input[type="checkbox"]')) return;
+  const row = event.target.closest('.file-item[data-id]');
+  if (!row || !current.files.find(file => file.id === row.dataset.id)?.size) return;
   setBusy(true);
-  try { showPreview(await request(api.preview(button.dataset.id))); }
+  try { showPreview(await request(api.preview(row.dataset.id))); }
   catch (error) { status(error.message); }
   finally { setBusy(false); }
 });
 byId('refresh').addEventListener('click', async () => {
   if (busy) return; setBusy(true); status('Preparing the selected EPUBs…'); resetPreview();
-  try { const preview = await request(api.prepare()); await refreshState(); showPreview(preview); status('Review the documents and Kindle address. Click a document name to read its preview.'); }
+  try { const preview = await request(api.prepare()); await refreshState(); showPreview(preview); status('Review the documents and Kindle address. Click a document row to read its preview.'); }
   catch (error) { await refreshState().catch(() => {}); status(error.message); }
   finally { setBusy(false); }
 });

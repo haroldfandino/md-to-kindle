@@ -15,18 +15,20 @@
     <div class="intro"><h2>Make room for a little reading.</h2><p>Choose your Markdown documents, review them, and send them to your Kindle.</p></div>
     <div class="workspace">
       <section class="library" aria-label="Document selection">
+        <div class="library-body">
         <div class="section-heading"><span class="step">01</span><h3>Your documents</h3></div>
         <div class="pickers"><button id="choose" class="secondary">Choose files</button><button id="choose-folder" class="secondary">Choose folder</button></div>
         <label class="checkbox-label"><input id="recursive" type="checkbox" checked> Include subfolders when choosing a folder</label>
         <div class="library-heading"><div><strong id="source">No files chosen</strong><span id="file-count" class="muted">Markdown files · .md and .markdown</span></div><button id="select-all" class="text-button" disabled>Select all</button></div>
         <div id="folder-warnings" class="warning" hidden></div>
         <div id="files" class="files"><div class="list-empty">Your documents will appear here.<br>Choose a file or browse a folder to begin.</div></div>
+        </div>
         <div class="selection-footer"><span id="selection-count">0 documents selected</span><button id="refresh" class="secondary" disabled>Review selected</button></div>
       </section>
       <section class="reading" aria-label="Document review">
         <div class="section-heading"><span class="step">02</span><h3>Before you send</h3><span class="format-tag">EPUB</span></div>
         <div id="preview-empty" class="preview-empty"><div class="book-icon" aria-hidden="true"><span></span><span></span><span></span></div><h3>A new home for your notes.</h3><p>Select the documents you want to read<br>and click <strong>Review selected</strong>.</p></div>
-        <div id="preview-details" hidden><div class="preview-title"><h2 id="filename"></h2><span id="size" class="muted"></span></div><div id="warnings" class="warning" hidden></div><article id="preview" aria-label="EPUB content"></article></div>
+        <div id="preview-details" tabindex="0" role="region" aria-label="Scrollable document preview" hidden><div class="preview-title"><h2 id="filename"></h2><span id="size" class="muted"></span></div><div id="warnings" class="warning" hidden></div><article id="preview" aria-label="EPUB content"></article></div>
       </section>
     </div>
     <section class="delivery" aria-label="Kindle destination">

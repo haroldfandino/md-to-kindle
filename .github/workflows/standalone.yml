@@ -25,6 +25,7 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm test
+      - run: npm run standalone:layout
       - run: npm run release
       - run: npm run standalone:package:${{ matrix.platform }}
       - if: matrix.platform == 'mac'
