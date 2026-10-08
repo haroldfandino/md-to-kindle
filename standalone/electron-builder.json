@@ -1,0 +1,29 @@
+{
+  "appId": "com.haroldfandino.md-to-kindle",
+  "productName": "md-to-kindle",
+  "directories": { "app": "standalone-dist", "output": "dist/standalone" },
+  "files": ["**/*"],
+  "asar": true,
+  "artifactName": "md-to-kindle-${version}-${os}-${arch}.${ext}",
+  "win": { "target": ["zip"], "signAndEditExecutable": false },
+  "mac": {
+    "target": ["zip"],
+    "category": "public.app-category.productivity",
+    "identity": null,
+    "extendInfo": {
+      "UTImportedTypeDeclarations": [{
+        "UTTypeIdentifier": "net.daringfireball.markdown",
+        "UTTypeDescription": "Markdown",
+        "UTTypeConformsTo": ["public.plain-text"],
+        "UTTypeTagSpecification": {"public.filename-extension": ["md", "markdown"], "public.mime-type": "text/markdown"}
+      }],
+      "CFBundleDocumentTypes": [{
+        "CFBundleTypeName": "Markdown",
+        "CFBundleTypeRole": "Viewer",
+        "LSHandlerRank": "Alternate",
+        "CFBundleTypeExtensions": ["md", "markdown"],
+        "LSItemContentTypes": ["net.daringfireball.markdown", "public.plain-text"]
+      }]
+    }
+  }
+}

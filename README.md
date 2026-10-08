@@ -1,6 +1,8 @@
 # md-to-kindle
 
-Send a note or supported document from Obsidian to your Kindle through your own email account. Notes become reflowable EPUBs with heading navigation and local images. Every send starts with a preview and requires a click on **Send**.
+Send a note or supported document from Obsidian to your Kindle through your own email account. You can also use the **standalone desktop app** to right-click a Markdown file in **Windows Explorer** or **macOS Finder** and send it without opening Obsidian. Notes become reflowable EPUBs with heading navigation and local images. Every send starts with a preview and requires a click on **Send**.
+
+For Explorer/Finder installation, see [standalone setup](docs/STANDALONE.md). On Windows, it automatically reuses your existing protected global email profile.
 
 Desktop only: Windows, macOS, and Linux. Requires Obsidian **1.11.4+** and an SMTP account that accepts an app password or password authentication. No hosted service or subscription is required by this plugin.
 
@@ -10,7 +12,7 @@ Desktop only: Windows, macOS, and Linux. Requires Obsidian **1.11.4+** and an SM
 
 Until a community-directory listing is approved:
 
-1. Download and extract `md-to-kindle-0.2.0.zip`.
+1. Download and extract `md-to-kindle-0.3.0.zip`.
 2. Copy its `md-to-kindle` folder into `<vault>/<config-dir>/plugins/`. The default configuration directory is `.obsidian`.
 3. Open Obsidian → Settings → Community plugins. Enable community plugins if needed, then enable **md-to-kindle**. Restart Obsidian if it does not appear.
 4. Open the plugin settings and configure your recipient and email account.
@@ -31,7 +33,7 @@ Version 0.2.0 adds an optional **Windows background helper** with one shared ema
 
 1. Update md-to-kindle in the vault where sending already works and reload the plugin.
 2. In **Settings → md-to-kindle**, click **Share this setup on this computer**. The linked app password is transferred directly into a Windows-protected local profile, without entering it again.
-3. Extract `md-to-kindle-helper-0.2.0.zip` and run `powershell -File .\scripts\install-helper.ps1` from its folder. The same command works in this source project after `npm run release`.
+3. Extract `md-to-kindle-helper-0.3.0.zip` and run `powershell -File .\scripts\install-helper.ps1` from its folder. The same command works in this source project after `npm run release`.
 
 The helper starts silently now and at Windows sign-in. It discovers current and future vaults from Obsidian's registry and installs only md-to-kindle. Vaults must allow community plugins; the helper does not change Restricted Mode. Already-open vaults may need one reload to discover the new plugin. Each Windows user/computer needs its own profile.
 

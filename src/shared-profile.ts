@@ -56,15 +56,18 @@ export const windowsProtector: SecretProtector = {
   unprotect: ciphertext => dpapi('Unprotect', ciphertext),
 };
 
+export type ProtectionId = 'windows-dpapi-current-user' | 'electron-safe-storage';
+
 interface StoredProfile {
   version: 1;
-  protection: 'windows-dpapi-current-user';
+  protection: ProtectionId;
   settings: MdToKindleSettings;
   encryptedPassword: string;
 }
 
 export class SharedProfileStore {
-  constructor(readonly root = sharedRoot(), private readonly protector: SecretProtector = windowsProtector) {}
+  constructor(readonly root = sharedRoot(), private readonly protector: SecretProtector = windowsProtector,
+    private readonly protection: ProtectionId = 'windows-dpapi-current-user') {}
   private get path(): string { return join(this.root, 'profile.json'); }
 
   async settings(): Promise<MdToKindleSettings> {
@@ -76,6 +79,14 @@ export class SharedProfileStore {
     return this.protector.unprotect((await this.read()).encryptedPassword);
   }
 
+  async credentials(): Promise<{ settings: MdToKindleSettings; password: string }> {
+    const profile = await this.read();
+    return {
+      settings: { ...loadSettings(profile.settings), profileMode: 'shared', passwordSecret: '' },
+      password: await this.protector.unprotect(profile.encryptedPassword),
+    };
+  }
+
   async create(settings: MdToKindleSettings, secret: string | null): Promise<void> {
     validateSmtp(settings, secret);
     validateRecipient(settings.kindleEmail);
@@ -83,7 +94,7 @@ export class SharedProfileStore {
     const encryptedPassword = await this.protector.protect(secret!);
     await mkdir(this.root, { recursive: true, mode: 0o700 });
     await atomicJson(this.path, {
-      version: 1, protection: 'windows-dpapi-current-user',
+      version: 1, protection: this.protection,
       settings: { ...loadSettings(settings), profileMode: 'shared', passwordSecret: '' }, encryptedPassword,
     } satisfies StoredProfile);
   }
@@ -99,7 +110,7 @@ export class SharedProfileStore {
       const input: unknown = JSON.parse((await readFile(this.path, 'utf8')).replace(/^\uFEFF/, ''));
       if (!input || typeof input !== 'object') throw new Error('Invalid profile');
       const profile = input as StoredProfile;
-      if (profile.version !== 1 || profile.protection !== 'windows-dpapi-current-user' || typeof profile.encryptedPassword !== 'string' || !profile.encryptedPassword) throw new Error('Invalid profile');
+      if (profile.version !== 1 || profile.protection !== this.protection || typeof profile.encryptedPassword !== 'string' || !profile.encryptedPassword) throw new Error('Invalid profile');
       return profile;
     } catch { throw new Error('The shared email profile is unavailable. In your configured vault, use “Share this setup on this computer”, or choose vault-only settings.'); }
   }

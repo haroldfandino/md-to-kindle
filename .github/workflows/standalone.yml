@@ -1,0 +1,48 @@
+name: Build standalone desktop apps
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  package:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: win
+          - os: macos-latest
+            platform: mac
+    runs-on: ${{ matrix.os }}
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run release
+      - run: npm run standalone:package:${{ matrix.platform }}
+      - if: matrix.platform == 'mac'
+        run: |
+          plutil -lint 'standalone/Send to Kindle.workflow/Contents/Info.plist'
+          plutil -lint 'standalone/Send to Kindle.workflow/Contents/document.wflow'
+          zsh -n scripts/install-standalone-mac.sh
+          zsh -n scripts/uninstall-standalone-mac.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: md-to-kindle-${{ matrix.platform }}
+          path: |
+            dist/standalone/*.zip
+            scripts/install-standalone.ps1
+            scripts/uninstall-standalone.ps1
+            scripts/install-standalone-mac.sh
+            scripts/uninstall-standalone-mac.sh
+            standalone/Send to Kindle.workflow/**
+            docs/STANDALONE.md
+          if-no-files-found: error
+          retention-days: 7

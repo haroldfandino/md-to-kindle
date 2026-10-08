@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>md-to-kindle</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main>
+    <header><div><p class="eyebrow">FROM YOUR FILES TO YOUR KINDLE</p><h1>md-to-kindle</h1></div><button id="settings-toggle" class="secondary">Email settings</button></header>
+    <section id="sender" class="card">
+      <div class="file-row"><div><span class="label">SELECTED MARKDOWN</span><h2 id="filename">Choose a Markdown file</h2><p id="size" class="muted">Your file stays on this computer until you click Send.</p></div><button id="choose" class="secondary">Choose file</button></div>
+      <p id="account" class="muted"></p>
+      <label for="recipient">Kindle email</label><input id="recipient" type="email" placeholder="you@kindle.com" autocomplete="off">
+      <div id="warnings" class="warning" hidden></div>
+      <details id="preview-details" hidden><summary>Read the EPUB preview</summary><article id="preview"></article></details>
+      <p class="help">Your sending email must be on Amazon’s Approved Personal Document E-mail List.</p>
+      <div class="actions"><button id="refresh" class="secondary">Refresh preview</button><button id="send" disabled>Send to Kindle</button></div>
+    </section>
+    <section id="settings" class="card" hidden>
+      <h2>Your email account</h2><p class="muted">On Windows, these settings are shared with md-to-kindle in Obsidian. The app password is protected by the operating system.</p>
+      <form id="settings-form">
+        <div class="fields">
+          <label>Kindle email<input name="kindleEmail" type="email" required></label>
+          <label>Sender email<input name="senderEmail" type="email" required></label>
+          <label>SMTP host<input name="smtpHost" placeholder="smtp.gmail.com" required></label>
+          <label>SMTP username<input name="smtpUsername" type="text" required></label>
+          <label>SMTP port<input name="smtpPort" type="number" min="1" max="65535" value="587" required></label>
+          <label>TLS mode<select name="tlsMode"><option value="starttls">Required STARTTLS</option><option value="tls">Implicit TLS</option></select></label>
+          <label>Attachment limit (MB)<input name="maxAttachmentMB" type="number" min="1" max="50" value="20" required></label>
+          <label>App password<input name="password" type="password" placeholder="Leave blank to keep the saved password" autocomplete="new-password"></label>
+        </div>
+        <p class="help">For Gmail: use smtp.gmail.com, port 587, and a Google app password created with 2-Step Verification. Paste it without spaces.</p>
+        <p class="help">In Amazon: Manage Your Content and Devices → Preferences → Personal Document Settings → Approved Personal Document E-mail List. Add your exact Sender email.</p>
+        <div class="actions"><button id="test" type="button" class="secondary">Test saved connection</button><button id="save" type="submit">Save settings</button></div>
+      </form>
+    </section>
+    <div id="status" role="status" aria-live="polite"></div>
+    <footer>Local conversion · Your own email account · Preview before sending</footer>
+  </main>
+  <script src="renderer.js"></script>
+</body>
+</html>

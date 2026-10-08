@@ -1,6 +1,6 @@
 # Public release and community-directory submission
 
-The current version is **0.2.0**, named **md-to-kindle**, ID **md-to-kindle**, desktop only, minimum Obsidian version **1.11.4**. Source is MIT-licensed. A recipient is never preset in public code or assets. The optional all-vault helper/shared profile currently supports Windows.
+The current version is **0.3.0**, named **md-to-kindle**, ID **md-to-kindle**, desktop only, minimum Obsidian version **1.11.4**. Source is MIT-licensed. A recipient is never preset in public code or assets. The optional all-vault helper/shared profile currently supports Windows. The standalone desktop app targets Windows and macOS, with Explorer/Finder actions.
 
 ## Prepare
 
@@ -13,7 +13,7 @@ The current version is **0.2.0**, named **md-to-kindle**, ID **md-to-kindle**, d
 ## Publish a release from the repository
 
 - Use [haroldfandino/md-to-kindle](https://github.com/haroldfandino/md-to-kindle) for source, the lockfile, MIT license, docs, and build/test scripts. Do not commit generated `main.js` or local settings.
-- Publish a GitHub release tagged `0.2.0` (without a leading `v`, matching the manifest). Attach standalone `main.js`, `manifest.json`, and `styles.css`, plus the plugin/helper installation ZIPs and checksums. Obsidian’s updater needs the standalone plugin assets.
+- Publish a GitHub release tagged `0.3.0` (without a leading `v`, matching the manifest). Attach standalone `main.js`, `manifest.json`, and `styles.css`, plus the plugin/helper ZIPs, desktop app ZIPs, context-menu installers and checksums. Obsidian’s updater needs the standalone plugin assets. Desktop app packages can be built through the manual GitHub Actions workflow; a completed build does not mean the app is signed or notarized.
 - Recheck the name and ID against the current community directory before submission. `docs/community-plugin.json` contains the repository slug `haroldfandino/md-to-kindle`.
 - Submit an entry to `obsidianmd/obsidian-releases` in `community-plugins.json` with the plugin ID, name, author, description, and repository slug, following the current official submission instructions.
 - Include the README account/network disclosures and completed verification results in the submission description. A prepared archive does not mean the plugin has been listed or approved; Obsidian reviews submissions independently.

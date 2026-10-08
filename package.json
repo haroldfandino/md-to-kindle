@@ -1,6 +1,6 @@
 {
   "name": "md-to-kindle",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Send Obsidian notes and supported documents to Kindle through your own email account.",
   "type": "module",
   "private": true,
@@ -20,12 +20,17 @@
     "helper:watch": "node helper.cjs --watch",
     "helper:status": "node helper.cjs --status",
     "helper:stop": "node helper.cjs --stop",
-    "profile:test": "tsx scripts/test-global-profile.ts"
+    "profile:test": "tsx scripts/test-global-profile.ts",
+    "standalone:build": "tsc --noEmit && node scripts/build-standalone.mjs",
+    "standalone:dev": "npm run standalone:build && electron standalone-dist",
+    "standalone:package:win": "npm run standalone:build && electron-builder --config standalone/electron-builder.json --win --x64 --publish never",
+    "standalone:package:mac": "npm run standalone:build && electron-builder --config standalone/electron-builder.json --mac --x64 --arm64 --publish never"
   },
   "dependencies": {
     "jszip": "^3.10.1",
     "markdown-it": "^14.1.0",
     "nodemailer": "^10.0.15",
+    "parse5": "^8.0.1",
     "sanitize-html": "^2.17.0"
   },
   "devDependencies": {
@@ -35,6 +40,8 @@
     "@types/nodemailer": "^7.0.0",
     "@types/sanitize-html": "^2.16.0",
     "@types/smtp-server": "^3.5.0",
+    "electron": "^44.7.0",
+    "electron-builder": "26.15.3",
     "esbuild": "^0.25.0",
     "jsdom": "^26.0.0",
     "obsidian": "1.11.4",

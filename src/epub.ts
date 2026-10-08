@@ -4,6 +4,7 @@ import MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token.mjs';
 import sanitizeHtml from 'sanitize-html';
 import { imageType, localImageTarget, safeFilename, type PreparedDocument } from './files';
+import { parseFragment, serialize, xhtml, elements, textContent, setAttribute, attribute } from './xhtml';
 
 export interface NoteSource {
   title: string;
@@ -193,18 +194,17 @@ export async function createEpub(source: NoteSource, resolveImage: ImageResolver
   });
   const title = source.title.trim() || 'Note';
   const bodyHtml = `<h1 id="book-title">${xml(title)}</h1>\n${rendered}`;
-  // XMLSerializer emits XHTML void elements and numeric/Unicode characters,
-  // rather than HTML-only entities that would make an EPUB invalid XML.
-  const document = new DOMParser().parseFromString(bodyHtml, 'text/html');
+  // HTML5 parsing plus explicit XML serialization works in Obsidian and in a
+  // standalone Node/Electron process without relying on browser globals.
+  const document = parseFragment(bodyHtml);
   // Assign IDs after sanitization so even raw HTML headings have unique,
   // reliable navigation targets and cannot duplicate the generated title ID.
-  const headings = Array.from(document.body.querySelectorAll('h1,h2,h3,h4,h5,h6')).slice(1).map((heading, index) => {
+  const headings = elements(document).filter(element => /^h[1-6]$/.test(element.tagName)).slice(1).map((heading, index) => {
     const id = `section-${index + 1}`;
-    heading.setAttribute('id', id);
-    return { id, title: heading.textContent || 'Section' };
+    setAttribute(heading, 'id', id);
+    return { id, title: textContent(heading) || 'Section' };
   });
-  const serializer = new XMLSerializer();
-  const xhtmlBody = Array.from(document.body.childNodes).map(node => serializer.serializeToString(node)).join('');
+  const xhtmlBody = xhtml(document);
   const zip = new JSZip();
   zip.file('mimetype', 'application/epub+zip', { compression: 'STORE' });
   zip.file('META-INF/container.xml', `<?xml version="1.0" encoding="UTF-8"?><container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container"><rootfiles><rootfile full-path="EPUB/package.opf" media-type="application/oebps-package+xml"/></rootfiles></container>`);
@@ -221,9 +221,9 @@ export async function createEpub(source: NoteSource, resolveImage: ImageResolver
   if (content.length > maxBytes) throw new Error('The generated EPUB exceeds your attachment limit.');
   // Use data URLs only in the preview, never in the EPUB.
   const preview = document;
-  for (const element of Array.from(preview.querySelectorAll('img'))) {
-    const image = [...images.values()].find(asset => asset.name === element.getAttribute('src'));
-    if (image) element.setAttribute('src', `data:${image.type};base64,${image.bytes.toString('base64')}`);
+  for (const element of elements(preview).filter(element => element.tagName === 'img')) {
+    const image = [...images.values()].find(asset => asset.name === attribute(element, 'src'));
+    if (image) setAttribute(element, 'src', `data:${image.type};base64,${image.bytes.toString('base64')}`);
   }
-  return { filename: safeFilename(title, 'epub'), title, contentType: 'application/epub+zip', content, warnings: [...warnings], previewHtml: preview.body.innerHTML };
+  return { filename: safeFilename(title, 'epub'), title, contentType: 'application/epub+zip', content, warnings: [...warnings], previewHtml: serialize(preview) };
 }

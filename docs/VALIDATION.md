@@ -34,3 +34,11 @@ On **2026-10-07**, strict typechecking, all **42 automated tests**, plugin/helpe
 The helper was installed on Windows with sign-in startup. A real configured vault successfully shared its linked app password directly into Windows-protected storage. The helper's status confirmed that the global profile was available and registered vaults were enrolled, with vaults lacking community-plugin configuration held pending that prerequisite. Existing per-vault settings were retained. Already-open plugin instances now read their saved profile mode before preparing a preview.
 
 No private sender/recipient addresses, plaintext passwords, vault contents, or local helper state are included in public release assets. An explicit live connection test loaded the real shared profile, unlocked its protected password in memory, and successfully authenticated with the configured email provider without sending a message. This is available as `npm run profile:test`. Automated SMTP tests send only to a local test server. macOS/Linux helper operation is unsupported; the standard plugin still supports those platforms in vault-only mode.
+
+## Version 0.3.0: standalone desktop app
+
+The EPUB exporter now uses a pure HTML5 parser and XML serializer, with no browser/Obsidian dependency. The existing sample EPUBs were revalidated with EPUBCheck: zero errors or warnings. Standalone tests cover Unicode filenames, on-disk conversion, Obsidian image references, path boundaries, UTF-8 and file limits, protected profile reuse, exact reviewed attachment bytes, settings changes after review, renderer behavior and duplicate submission prevention.
+
+Production dependencies pass `npm audit --omit=dev`. The current Electron packaging toolchain has eight moderate development-only advisory entries through its download/logger dependencies; these are not runtime dependencies of the app. The latest supported builder is used rather than downgrading to an older toolchain with higher-severity advisories.
+
+Desktop packages are unsigned and macOS packages are not notarized. Windows Explorer integration and app startup are checked locally; macOS package assembly, plist syntax and shell syntax are checked on the GitHub macOS runner. Finder/Keychain interaction on a user's Mac requires a separate interactive smoke test.

@@ -1,7 +1,7 @@
 {
   "id": "md-to-kindle",
   "name": "md-to-kindle",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "minAppVersion": "1.11.4",
   "description": "Convert a note to EPUB or send a supported file to Kindle through your own email account.",
   "author": "Harold Fandino",
