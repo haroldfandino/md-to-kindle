@@ -50,3 +50,11 @@ The [Windows and macOS build run](https://github.com/haroldfandino/md-to-kindle/
 On **2026-10-07**, the Explorer registration was expanded to include a Markdown-filtered generic file verb and the current editor's ProgID keys, alongside extension registrations. The registrar now calls `SHChangeNotify(SHCNE_ASSOCCHANGED)` so Explorer refreshes its association cache. The default editor and its existing Open command were checked before and after repair and remained unchanged.
 
 Windows Shell's actual verb enumeration confirmed exactly one **Send to Kindle** entry on the affected iCloud Markdown file and the synthetic `.md` file. It confirmed no such entry on a `.txt` file. A registry-isolated regression test checks filtered registration, quoted filename forwarding and idempotency. All **53 tests** and strict typechecking passed. The repair can run while the standalone app is open, without reinstalling it or restarting Explorer.
+
+## Windows sign-in startup repair
+
+On **2026-10-08**, the old Script Host launcher was replaced with a Startup shortcut to hidden PowerShell. It uses the installed helper's working directory and waits up to 60 seconds for runtime files to become available. Reinstallation now recovers a stale lock only when its recorded process has exited.
+
+All **54 tests**, strict typechecking and release integrity checks passed. The startup regression was also rerun after adding stale-lock coverage: it verifies paths with spaces, legacy entry removal, preservation of unrelated startup entries, delayed file availability, generic failure diagnostics and reinstallation with a dead process lock. Tests use an isolated helper root and synthetic profile, without sending email.
+
+The repair was installed locally and the actual Startup shortcut was launched successfully. A live watcher processed all six registered vaults, and the protected email profile remained byte-for-byte unchanged. The old `.vbs` entry was absent. A full Windows reboot was not performed during verification.

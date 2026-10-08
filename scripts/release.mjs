@@ -22,7 +22,7 @@ const bytes = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLAT
 await writeFile(filename, bytes);
 const helper = new JSZip();
 helper.file('md-to-kindle-helper/helper.cjs', await readFile('helper.cjs'));
-for (const name of ['install-helper.ps1', 'stop-helper.ps1']) helper.file(`md-to-kindle-helper/scripts/${name}`, await readFile(`scripts/${name}`));
+for (const name of ['install-helper.ps1', 'stop-helper.ps1', 'start-helper.ps1', 'register-helper-startup.ps1']) helper.file(`md-to-kindle-helper/scripts/${name}`, await readFile(`scripts/${name}`));
 for (const name of ['README.md', 'LICENSE', 'docs/AUTOMATIC_SETUP.md']) helper.file(`md-to-kindle-helper/${name}`, await readFile(name));
 for (const name of ['main.js', 'manifest.json', 'styles.css', 'LICENSE', 'THIRD_PARTY_NOTICES.md']) helper.file(`md-to-kindle-helper/dist/md-to-kindle/${name}`, await readFile(name));
 const helperName = `md-to-kindle-helper-${manifest.version}.zip`;

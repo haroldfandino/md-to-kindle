@@ -12,6 +12,8 @@ powershell -File .\scripts\install-helper.ps1
 
 The source project uses the same command after `npm run release`. The installer copies a local Node executable into the helper folder, so moving the source repository later does not break the watcher. No administrator privileges are required. `-SkipStartup` avoids sign-in startup; `-SkipStart` installs without launching the process.
 
+Windows startup uses `md-to-kindle-helper.lnk` in your Startup folder. It launches a hidden PowerShell process with the helper's own working directory, then starts the watcher. The launcher waits up to 60 seconds for its local runtime files to become available. Updating removes the previous `.vbs` startup entry.
+
 Vaults need to allow community plugins. When no `community-plugins.json` exists, the helper installs the files but waits for Obsidian to create that list; it does not change Restricted Mode. Already-open vaults may need one reload before the added plugin appears. The standard plugin remains available on macOS/Linux in vault-only mode.
 
 ## Local files
@@ -23,6 +25,7 @@ Files are stored in `%LOCALAPPDATA%\md-to-kindle`, outside vaults:
 - `state.json`: managed installations and deliberate disable/uninstall opt-outs.
 - `status.json`: watcher status and per-vault results. It contains local vault paths but no note content or passwords.
 - `helper/`: the bundled watcher, local Node runtime and plugin assets.
+- `helper/startup-error.txt`: a generic repair instruction if the launcher cannot start the watcher; it contains no credentials and is cleared on the next successful launch.
 
 Sharing transfers the app password directly from the configured vault's Keychain into protected storage. No password appears in command-line arguments, environment variables, plaintext vault files or logs. The helper never reads/decrypts that password; the plugin unlocks it only for sends and connection tests. There is no plaintext fallback. Setting changes in shared mode apply across participating vaults. A preview keeps its reviewed sender/recipient settings for that send.
 
@@ -46,7 +49,13 @@ If the helper starts before the shared profile exists, it installs assets but pr
 
 ## Updates, status and stopping
 
-The helper uses its bundled local assets; it does not fetch remote updates. After downloading/building an update, rerun `install-helper.ps1`. It stops the old watcher, updates the bundle and restarts it. Settings and passwords are preserved.
+The helper uses its bundled local assets; it does not fetch remote updates. After downloading/building an update, rerun `install-helper.ps1`. It stops the old watcher, recovers locks left by a process that has exited, updates the bundle and restarts it. Settings and passwords are preserved.
+
+If Windows previously displayed a Script Host error for `md-to-kindle-helper.vbs`, rerun the updated installer to replace that entry. To start the installed helper without reinstalling, run:
+
+```powershell
+powershell -NoProfile -File "$env:LOCALAPPDATA\md-to-kindle\helper\start-helper.ps1"
+```
 
 From the source checkout, use `npm run profile:test` to explicitly test the protected shared email profile without sending a message or printing its credentials. Check watcher status using `npm run helper:status`, or:
 
