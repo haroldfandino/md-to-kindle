@@ -1,12 +1,12 @@
 # Standalone Markdown sender
 
-**md-to-kindle 0.4.1** is an app you open when you want to read your Markdown documents on Kindle. Choose files or browse a folder, select the documents you want, review their EPUB previews and click Send. Each document is sent in a separate email with one attachment. Obsidian does not need to be running.
+**md-to-kindle 0.4.2** is an app you open when you want to read your Markdown documents on Kindle. Choose files or browse a folder, select the documents you want, review their EPUB previews and click Send. Each document is sent in a separate email with one attachment. Obsidian does not need to be running.
 
 The standalone app does not install Explorer/Finder actions, file associations, background services or sign-in startup. Updating removes older desktop context-menu actions. The Obsidian plugin remains version 0.3.0 and its existing features/settings are preserved.
 
 ## Install on Windows
 
-Extract `md-to-kindle-0.4.1-win-x64.zip` and keep all of its app files together. Obtain the installer and cleanup script from the same build artifact or source checkout, then run in a normal Windows PowerShell session:
+Extract `md-to-kindle-0.4.2-win-x64.zip` and keep all of its app files together. Obtain the installer and cleanup script from the same build artifact or source checkout, then run in a normal Windows PowerShell session:
 
 ```powershell
 powershell -File .\scripts\install-standalone.ps1 -AppFolder 'C:\path\to\extracted\app'
@@ -28,7 +28,7 @@ If you also want to stop the optional Obsidian all-vault helper and remove its s
 
 ## Install on macOS
 
-Use `md-to-kindle-0.4.1-mac-arm64.zip` for Apple Silicon or `md-to-kindle-0.4.1-mac-x64.zip` for Intel. Extract the app and run the installer from the same artifact/source checkout:
+Use `md-to-kindle-0.4.2-mac-arm64.zip` for Apple Silicon or `md-to-kindle-0.4.2-mac-x64.zip` for Intel. Extract the app and run the installer from the same artifact/source checkout:
 
 ```sh
 zsh scripts/install-standalone-mac.sh '/path/to/md-to-kindle.app'
@@ -52,6 +52,10 @@ Success means **Submitted to your email provider**, not confirmed Kindle deliver
 The app reads saved file contents, so unsaved editor changes are not included. The reviewed EPUB bytes are kept in memory and sent unchanged even if the source changes afterward. Changing the selection or saved email settings requires a new review. The default attachment limit is 20 MB per document, configurable up to 50 MB; provider limits may be lower. The in-memory review budget is 100 MB for the selection.
 
 Local PNG/JPEG/GIF images are supported, including vault-root paths and unique image filenames inside a default Obsidian vault. Missing, remote, unsafe, ambiguous and unsupported images are omitted with warnings. Linked notes and dynamic plugins are not executed or followed. Files must be UTF-8 Markdown. Folder browsing is bounded and does not follow linked directories.
+
+## Appearance
+
+Use the **Theme** selector in the top bar to choose **System**, **Light**, or **Dark**. System is the default and follows your operating system, including changes while the app is open. Your choice is saved on this computer and restored when the app reopens. Theme changes preserve your selected documents and reviewed EPUBs; the appearance preference is separate from email settings and does not change the document sent to Kindle.
 
 ## Connect your email and approve it in Amazon
 

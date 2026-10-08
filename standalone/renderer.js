@@ -3,6 +3,13 @@ const byId = id => document.getElementById(id);
 let busy = false;
 let current;
 let previewId;
+let themeMode = 'system';
+let themeSaving = false;
+function applyAppearance(mode) {
+  themeMode = ['system', 'light', 'dark'].includes(mode) ? mode : 'system';
+  document.documentElement.dataset.theme = themeMode;
+  byId('appearance').value = themeMode;
+}
 function status(message) { byId('status').textContent = message; }
 async function request(promise) { const result = await promise; if (!result.ok) throw new Error(result.error); return result.value; }
 function eligible(file) { return file.status !== 'submitted' && file.status !== 'failed'; }
@@ -10,6 +17,7 @@ function selected() { return current?.files.filter(file => file.selected && elig
 function setBusy(value) {
   busy = value;
   for (const control of document.querySelectorAll('button, input, select')) control.disabled = value;
+  byId('appearance').disabled = value || themeSaving;
   if (!value) {
     const count = selected().length;
     byId('refresh').disabled = !count || !current?.configured;
@@ -67,11 +75,19 @@ function showPreview(preview) {
 }
 async function refreshState() { current = await request(api.state()); render(); }
 async function initialize() {
-  try { await refreshState(); fillSettings(current.settings); if (!current.configured) { byId('settings').hidden = false; status('Connect your email account to begin.'); } }
+  try { await refreshState(); applyAppearance(current.appearance); fillSettings(current.settings); if (!current.configured) { byId('settings').hidden = false; status('Connect your email account to begin.'); } }
   catch (error) { status(error.message); }
 }
 byId('settings-toggle').addEventListener('click', () => { byId('settings').hidden = false; });
 byId('settings-close').addEventListener('click', () => { byId('settings').hidden = true; });
+byId('appearance').addEventListener('change', async event => {
+  if (busy || themeSaving) return;
+  const previous = themeMode;
+  themeSaving = true; byId('appearance').disabled = true;
+  try { applyAppearance(await request(api.appearance(event.target.value))); }
+  catch (error) { applyAppearance(previous); status(error.message); }
+  finally { themeSaving = false; byId('appearance').disabled = busy; }
+});
 for (const [id, operation] of [['choose', () => api.chooseFiles()], ['choose-folder', () => api.chooseFolder(byId('recursive').checked)]]) {
   byId(id).addEventListener('click', async () => {
     if (busy) return; setBusy(true); status('Browsing your documents…');

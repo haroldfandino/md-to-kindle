@@ -1,11 +1,16 @@
-import { app, BrowserWindow, ipcMain, dialog, safeStorage } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog, safeStorage, nativeTheme } from 'electron';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { SharedProfileStore } from '../src/shared-profile';
 import { StandaloneSession } from './session';
+import { AppearanceStore, type AppearanceMode } from './appearance';
 
 app.setName('md-to-kindle');
 const sessions = new Map<number, StandaloneSession>();
+let appearance: AppearanceMode = 'system';
+let appearanceStore: AppearanceStore;
+const windowBackground = () => nativeTheme.shouldUseDarkColors ? '#171d19' : '#f5f3ed';
+nativeTheme.on('updated', () => { for (const window of BrowserWindow.getAllWindows()) window.setBackgroundColor(windowBackground()); });
 
 function profile(): SharedProfileStore {
   if (process.platform === 'win32') return new SharedProfileStore();
@@ -25,7 +30,7 @@ function profile(): SharedProfileStore {
 function createWindow(): void {
   const window = new BrowserWindow({
     title: 'md-to-kindle', width: 1160, height: 850, minWidth: 850, minHeight: 650,
-    backgroundColor: '#faf7f1', autoHideMenuBar: true,
+    backgroundColor: windowBackground(), autoHideMenuBar: true,
     webPreferences: { preload: join(__dirname, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
   });
   sessions.set(window.webContents.id, new StandaloneSession(profile()));
@@ -51,15 +56,23 @@ else {
     if (window) { if (window.isMinimized()) window.restore(); window.show(); window.focus(); }
     else createWindow();
   });
-  app.whenReady().then(() => {
-    for (const operation of ['state', 'chooseFiles', 'chooseFolder', 'selection', 'prepare', 'preview', 'send', 'save', 'test'] as const) {
+  app.whenReady().then(async () => {
+    appearanceStore = new AppearanceStore(join(app.getPath('userData'), 'appearance.json'));
+    appearance = await appearanceStore.load();
+    nativeTheme.themeSource = appearance;
+    for (const operation of ['state', 'appearance', 'chooseFiles', 'chooseFolder', 'selection', 'prepare', 'preview', 'send', 'save', 'test'] as const) {
       ipcMain.handle(`mdk:${operation}`, async (event, ...args: unknown[]) => {
         // Requests must originate in a window we own, from its main frame.
         const session = sessions.get(event.sender.id);
         if (!session || event.senderFrame !== event.sender.mainFrame || event.sender.getURL() !== pathToFileURL(join(__dirname, 'index.html')).toString()) return { ok: false, error: 'Invalid application request.' };
         try {
           let value: unknown;
-          if (operation === 'state') value = await session.state();
+          if (operation === 'state') value = { ...await session.state(), appearance };
+          if (operation === 'appearance') {
+            appearance = await appearanceStore.save(args[0]);
+            nativeTheme.themeSource = appearance;
+            value = appearance;
+          }
           if (operation === 'chooseFiles' || operation === 'chooseFolder') {
             if (session.isBusy) throw new Error('Wait for the current operation to finish.');
             const owner = BrowserWindow.fromWebContents(event.sender);

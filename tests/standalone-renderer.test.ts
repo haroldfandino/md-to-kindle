@@ -56,3 +56,23 @@ test('GUI chooses a folder, selects and reviews documents, displays progress and
   assert.equal(previews, 3); assert.ok(selections > 1);
   browser.window.close();
 });
+
+test('theme controls load and save independently of document selection and recover from save failures', async () => {
+  const browser = new JSDOM(await readFile('standalone/index.html', 'utf8'), { runScripts: 'outside-only', url: 'file:///application/index.html' });
+  const { window } = browser;
+  let stateCalls = 0; let fail = false; const changes: string[] = [];
+  Object.assign(window, { kindle: {
+    state: async () => { stateCalls++; return { ok: true, value: { configured: true, appearance: 'dark', settings: { kindleEmail: 'reader@kindle.com', senderEmail: 'sender@example.com' }, source: '', files: [], warnings: [], reviewed: false } }; },
+    appearance: async (mode: string) => { changes.push(mode); return fail ? { ok: false, error: 'Could not save appearance.' } : { ok: true, value: mode }; },
+  } });
+  const tick = () => new Promise(resolve => setTimeout(resolve, 0));
+  window.eval(await readFile('standalone/renderer.js', 'utf8')); await tick();
+  const selector = window.document.getElementById('appearance') as HTMLSelectElement;
+  assert.equal(selector.value, 'dark'); assert.equal(window.document.documentElement.dataset.theme, 'dark');
+  for (const mode of ['light', 'system']) { selector.value = mode; selector.dispatchEvent(new window.Event('change')); await tick(); assert.equal(window.document.documentElement.dataset.theme, mode); }
+  assert.equal(stateCalls, 1); assert.deepEqual(changes, ['light', 'system']);
+  fail = true; selector.value = 'dark'; selector.dispatchEvent(new window.Event('change')); await tick();
+  assert.equal(selector.value, 'system'); assert.equal(window.document.documentElement.dataset.theme, 'system');
+  assert.match(window.document.getElementById('status')!.textContent!, /Could not save/); assert.equal(selector.disabled, false);
+  browser.window.close();
+});

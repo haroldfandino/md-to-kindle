@@ -1,4 +1,4 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeTheme } = require('electron');
 const { join, resolve } = require('node:path');
 const { mkdir, writeFile } = require('node:fs/promises');
 const { tmpdir } = require('node:os');
@@ -7,6 +7,8 @@ const output = resolve(__dirname, '../artifacts/layout-check');
 const cases = [[1160, 850, 1], [850, 650, 1], [1600, 1000, 1], [1160, 850, 1.25], [850, 650, 1.25], [850, 650, 1.5]];
 const deadline = setTimeout(() => { console.error('Layout check timed out.'); app.exit(1); }, 45000);
 app.whenReady().then(async () => {
+  ipcMain.handle('layout:appearance', (_event, mode) => { if (!['light', 'dark', 'system'].includes(mode)) throw new Error('Invalid fixture appearance.'); nativeTheme.themeSource = mode; });
+  nativeTheme.themeSource = 'light';
   const window = new BrowserWindow({ width: 1160, height: 850, show: false, autoHideMenuBar: true, webPreferences: { preload: resolve(__dirname, '../tests/layout-preload.cjs'), sandbox: true, contextIsolation: true, nodeIntegration: false, backgroundThrottling: false } });
   const run = source => window.webContents.executeJavaScript(source);
   const pause = () => new Promise(resolvePause => setTimeout(resolvePause, 120));
@@ -22,6 +24,9 @@ app.whenReady().then(async () => {
     await run(`document.getElementById('refresh').click()`);
     await wait(`!document.getElementById('send').disabled`);
     const results = [];
+    for (const theme of ['light', 'dark']) {
+      await run(`document.getElementById('appearance').value=${JSON.stringify(theme)}; document.getElementById('appearance').dispatchEvent(new Event('change'))`);
+      await wait(`document.documentElement.dataset.theme===${JSON.stringify(theme)} && !document.getElementById('appearance').disabled`);
     for (const [width, height, zoom] of cases) {
       window.setSize(width, height); window.webContents.setZoomFactor(zoom); await pause();
       const metrics = await run(`(() => {
@@ -37,11 +42,22 @@ app.whenReady().then(async () => {
       if (!metrics.reviewVisible || metrics.horizontalOverflow || metrics.verticalOverflow || !metrics.previewScrollable || !metrics.lastParagraphReachable || metrics.previewHeight <= 0 || metrics.previewTabIndex !== 0) {
         throw new Error(`Layout failed at ${width}x${height}, zoom ${zoom}: ${JSON.stringify(metrics)}`);
       }
-      results.push({ size: [width, height], zoom, ...metrics });
+      results.push({ theme, size: [width, height], zoom, ...metrics });
       if (process.argv.includes('--screenshots') && [1, 1.5].includes(zoom)) {
         await mkdir(output, { recursive: true }); await pause();
-        await writeFile(join(output, `${width}-${height}-${zoom}.png`), (await window.webContents.capturePage()).toPNG());
+        await writeFile(join(output, `${theme}-${width}-${height}-${zoom}.png`), (await window.webContents.capturePage()).toPNG());
       }
+    }
+    }
+    await run(`document.getElementById('appearance').value='system'; document.getElementById('appearance').dispatchEvent(new Event('change'))`);
+    await wait(`document.documentElement.dataset.theme==='system' && !document.getElementById('appearance').disabled`);
+    const system = [];
+    for (const osTheme of ['dark', 'light']) {
+      // Simulate an OS preference change inside this test process only.
+      nativeTheme.themeSource = osTheme; await pause();
+      const appearance = await run(`({mode:document.getElementById('appearance').value,scheme:getComputedStyle(document.documentElement).colorScheme,background:getComputedStyle(document.body).backgroundColor})`);
+      if (appearance.mode !== 'system' || appearance.scheme !== osTheme) throw new Error('System mode did not follow the OS color scheme.');
+      system.push(appearance);
     }
     // Test the actual Chromium click target in a row's padding and badge area.
     window.setSize(1160, 850); window.webContents.setZoomFactor(1); await pause();
@@ -49,8 +65,8 @@ app.whenReady().then(async () => {
     await wait(`document.getElementById('filename').textContent.startsWith('1 ') && !document.getElementById('send').disabled`);
     const interaction = await run(`({selected:document.querySelectorAll('#files input:checked').length, previewReset:document.getElementById('preview-details').scrollTop===0})`);
     if (interaction.selected !== 60 || !interaction.previewReset) throw new Error('Row preview changed checkboxes or retained the previous scroll offset.');
-    await mkdir(output, { recursive: true }); await writeFile(join(output, 'results.json'), JSON.stringify({ cases: results, interaction, sentEmails: 0 }, null, 2));
-    console.log(`Passed ${results.length} default/minimum/large/zoom layout cases, full-document scrolling and row preview. No email sent.`);
+    await mkdir(output, { recursive: true }); await writeFile(join(output, 'results.json'), JSON.stringify({ cases: results, system, interaction, sentEmails: 0 }, null, 2));
+    console.log(`Passed ${results.length} light/dark layout cases, live System mode, full-document scrolling and row preview. No email sent.`);
     clearTimeout(deadline); app.quit();
   } catch (error) { console.error(error.message); clearTimeout(deadline); app.exit(1); }
 }).catch(error => { console.error(error.message); clearTimeout(deadline); app.exit(1); });

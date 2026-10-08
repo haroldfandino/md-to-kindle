@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 contextBridge.exposeInMainWorld('kindle', {
   state: () => ipcRenderer.invoke('mdk:state'),
+  appearance: (mode: string) => ipcRenderer.invoke('mdk:appearance', mode),
   chooseFiles: () => ipcRenderer.invoke('mdk:chooseFiles'),
   chooseFolder: (recursive: boolean) => ipcRenderer.invoke('mdk:chooseFolder', recursive),
   selection: (ids: string[]) => ipcRenderer.invoke('mdk:selection', ids),
