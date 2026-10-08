@@ -57,6 +57,8 @@ If Windows previously displayed a Script Host error for `md-to-kindle-helper.vbs
 powershell -NoProfile -File "$env:LOCALAPPDATA\md-to-kindle\helper\start-helper.ps1"
 ```
 
+Run installation in a normal Windows PowerShell session under the account that uses Obsidian. An isolated automation environment may see installed files that Windows sign-in cannot access. If startup reports missing files, check that `helper\bin\node.exe`, `helper\helper.cjs` and `helper\start-helper.ps1` exist under `%LOCALAPPDATA%\md-to-kindle` in your normal Windows session, then rerun the installer there.
+
 From the source checkout, use `npm run profile:test` to explicitly test the protected shared email profile without sending a message or printing its credentials. Check watcher status using `npm run helper:status`, or:
 
 ```powershell
